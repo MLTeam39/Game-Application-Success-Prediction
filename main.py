@@ -14,14 +14,11 @@ from scipy import stats
 
 # Loading data
 data = pd.read_csv('games-regression-dataset.csv')
-X = data.drop(["Average User Rating"], axis=1)  # features
-y = data["Average User Rating"]  # label
-# print(X)
+X = data.iloc[:, :-1]
+y = data.iloc[:, -1]
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
 
-# Split the data to training and testing sets
-y = np.array(y)
-y = y.reshape((X.shape[0], 1))
-X_train, X_test, Y_train, Y_test = train_test_split(X, y, test_size=0.2, shuffle=True)
+
 PriceCol = X_train['Price']
 #check Missing values of Price and Average User Rating columns
 print('num of missing values in Price:',PriceCol.isna().sum())
@@ -120,12 +117,14 @@ if (float(flag) >= 99):
 
 output = X_train['Genres'].str.get_dummies(sep=', ')
 
+for i in output.columns.values.tolist():
+    X_train[i]=output[i]
+
+X_train = X_train.drop(['Genres'], axis=1)
 # data=pd.concat(output)
 # data=data(output.columns.values.tolist())
 
 # data["Action","Adventure","Board","Books","Business","Card","Casino","Casual","Education","Entertainment" ," Reference","Role", "Playing","Simulation", "Social Networking","Sports","Strategy","Travel","Trivia","Utilities","Word"]=output
-
-
 print(output)
 
 # Missing Values
@@ -135,7 +134,9 @@ print(X_train['Languages'].isnull().sum())  # there is 11 missing value
 
 X_train['Languages'].value_counts()  # most_frequent is'EN'=2728
 most_frequent = 'EN'
-data['Languages'].fillna(most_frequent, inplace=True)
+X_train['Languages'].fillna(most_frequent, inplace=True)
+X_test['Languages'].fillna(most_frequent, inplace=True)
+print('null', X_test['Languages'].isnull().sum())  # there is 11 missing value
 
 # Reformate Date
 X_train['Original Release Date'] = pd.to_datetime(X_train['Original Release Date'], dayfirst=True)
@@ -157,11 +158,16 @@ X_train['Current Version Release Day'] = X_train['Current Version Release Day'].
 # print(data['Original Release Date'].corr(data['Average User Rating']))
 
 # Languages
+# print(data.at[0, 'Languages'])
 i = 0
+languages = []
 for row in X_train['Languages']:
-    X_train.at[i, 'Num_Languages'] = len(row.split())
-    i += 1
-X_train['Num_Languages'] =  X_train['Num_Languages'].astype(int)
+    # print(len(row.split()))
+    languages.append(len(row.split(', ')))
+
+X_train['New_Languages'] = languages
+print(X_train['New_Languages'])
+
 
 X_train = X_train.drop(['Languages'], axis=1)
 X_train = X_train.drop(['Current Version Release Date'], axis=1)
