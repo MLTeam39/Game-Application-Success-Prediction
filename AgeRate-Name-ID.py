@@ -39,10 +39,6 @@ print(data)
 len(data['ID'])-len(data['Name'].drop_duplicates())
 print(data)
 
-
-data['Languages']=data['Languages'].str.split(',')
-
-print(data['Languages'])
 data = data.drop(data.columns[[0,1,2,4,11]], axis=1) #droped columns
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
 print(data)
@@ -54,8 +50,7 @@ data.loc[data['NewAgeRate'].isin(['9+']), 'NewAgeRate'] = '1'
 data.loc[data['NewAgeRate'].isin(['4+']), 'NewAgeRate'] = '0'
 """counts nulls"""
 counts = data.isna().sum()
-print(counts.sort_values())
-#co = data.corr()
+
 
 
 
