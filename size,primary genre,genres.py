@@ -77,46 +77,7 @@ if (float(flag)>=99):
 
 output = data['Genres'].str.get_dummies(sep=', ')
 
-#data=pd.concat(output)
-#data=data(output.columns.values.tolist())
-
-#data["Action","Adventure","Board","Books","Business","Card","Casino","Casual","Education","Entertainment" ," Reference","Role", "Playing","Simulation", "Social Networking","Sports","Strategy","Travel","Trivia","Utilities","Word"]=output
-
-
-print(output)    
-
-
-
-data.head ()
-
-
-# In[ ]:
-
-
-
-   
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
+for i in output.columns.values.tolist():
+    data[i]=output[i]
 
 
