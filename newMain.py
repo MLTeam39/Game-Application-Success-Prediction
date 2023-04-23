@@ -19,11 +19,12 @@ from sklearn.model_selection import train_test_split
 from scipy import stats
 from sklearn.preprocessing import MaxAbsScaler
 import matplotlib.pyplot
+from sklearn.linear_model import LinearRegression
 # Loading Data
 #data = pd.read_csv('games-regression-dataset.csv')
 data = pd.read_csv("C:/Users/Tech/Downloads/Lab3/games-regression-dataset.csv")
-X = data.iloc[:, :-1]
-Y = data.iloc[:, -1]
+X = data.drop(["Average User Rating"], axis=1)
+Y = data["Average User Rating"]
 
 # Split Data
 X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=0)
@@ -33,10 +34,10 @@ X_test.to_csv('TestData.csv', index=False)
 # Preprocessing
 # Check Nulls and Unique Percentage
 X_train = preFun.feature_selection(X_train)
-
+#X_train = preFun.feature_selection(X_test)
 # User Rating Count
 # print(X_train['User Rating Count'])
-X_train = preFun.feature_scaling(X_train, 'User Rating Count')
+preFun.feature_scaling(X_train,X_test, 'User Rating Count')
 # print(X_train['User Rating Count'])
 # tempFeat = np.array(X_train['User Rating Count']).reshape(-1, 1)
 # scaler = MaxAbsScaler()
@@ -48,7 +49,7 @@ X_train = preFun.feature_scaling(X_train, 'User Rating Count')
 PriceCol = X_train['Price']
 # make feature scaling to Price column
 # TODO: Scaling from 0 -> 1 or -1 -> 1
-X_train = preFun.feature_scaling(X_train, 'Price')
+preFun.feature_scaling(X_train,X_test, 'Price')
 # ResPrice = (PriceCol - PriceCol.min())/(PriceCol.max()-PriceCol.min())
 # X_train['Price'] = ResPrice
 
@@ -56,22 +57,39 @@ X_train = preFun.feature_scaling(X_train, 'Price')
 # Developer
 # Feature Encoding
 # print(X_train['Developer'])
-
+"""
 enc = LabelEncoder()
 enc.fit(list(X_train['Developer'].values))
 X_train['Developer'] = enc.transform(list(X_train['Developer'].values))
-
-X_train = preFun.feature_scaling(X_train, 'Developer')
+##anhandling of unkown test data#
+X_test['Developer'] = enc.transform(list(X_test['Developer'].values))
+#### data in test that didn't exist in train 
+preFun.feature_scaling(X_train,X_test, 'Developer')
+"""
 # print(X_train['Developer'])
 
 # Age Rating
 # TODO: Explain!
-X_train.loc[X_train['Age Rating'].isin(['17+']), 'Age Rating'] = '3'
-X_train.loc[X_train['Age Rating'].isin(['12+']), 'Age Rating'] = '2'
-X_train.loc[X_train['Age Rating'].isin(['9+']), 'Age Rating'] = '1'
-X_train.loc[X_train['Age Rating'].isin(['4+']), 'Age Rating'] = '0'
+X_train.loc[X_train['Age Rating'].isin(['17+']), 'Age Rating'] = 4
+X_train.loc[X_train['Age Rating'].isin(['12+']), 'Age Rating'] = 3
+X_train.loc[X_train['Age Rating'].isin(['9+']), 'Age Rating'] = 2
+X_train.loc[X_train['Age Rating'].isin(['4+']), 'Age Rating'] = 1
+
+notInRate = ['4+','9+','12+','17+']
+col = X_test['Age Rating']
+for i  in range(len(col.index)):
+    if col.iloc[i] not in notInRate:
+       col.iloc[i] = 0
+X_test['Age Rating'] = col
+X_test.loc[X_test['Age Rating'].isin(['17+']), 'Age Rating'] = 4
+X_test.loc[X_test['Age Rating'].isin(['12+']), 'Age Rating'] = 3
+X_test.loc[X_test['Age Rating'].isin(['9+']), 'Age Rating'] = 2
+X_test.loc[X_test['Age Rating'].isin(['4+']), 'Age Rating'] = 1
 
 
+## approximate the input to the nearest value ex 15+ is near to 17+
+
+##  other values are not handled
 # #Dropping features
 # X_train['NewAgeRate'] = X_train['Age Rating']
 # X_train = X_train.drop(X_train.columns[[0, 1, 2, 4, 10]], axis=1) #droped columns
@@ -113,6 +131,7 @@ X_train['Developer'] = enc.transform(list(X_train['Developer'].values))
 print(X_train['Developer'])
 
 #Size_new=pd.read_csv("games-regression-dataset.csv",usecols=['Size'])
+"""
 Size_new=pd.read_csv("C:/Users/Tech/Downloads/Lab3/games-regression-dataset.csv",usecols=['Size'])
 tempFeat = np.array(Size_new['Size']).reshape(-1, 1)
 scaler = MaxAbsScaler()
@@ -122,6 +141,8 @@ Size_new['Size'] = scaledFeat.reshape(1, -1)[0]
 data_cpycpy = X_train.drop(['Size'], axis=1)
 X_train = pd.DataFrame(data_cpycpy)
 X_train['Size'] = Size_new['Size']
+"""
+preFun.feature_scaling(X_train, X_test, 'Size')
 
 # ##########################################
 # ##'Primary Genre'
@@ -143,16 +164,30 @@ flag = "%.2f" % (count / len(PrimaryGenre) * 100)
 
 if (float(flag) >= 99):
     X_train = X_train.drop(['Primary Genre'], axis=1)
+    X_test = X_test.drop(['Primary Genre'], axis=1)
 
 # ##########################################
 # ##'Genres'
 
-output = X_train['Genres'].str.get_dummies(sep=', ')
+output_train = X_train['Genres'].str.get_dummies(sep=', ')
+output_test = X_test['Genres'].str.get_dummies(sep=', ')
+X_test['others'] =0
 
-for i in output.columns.values.tolist():
-    X_train[i]=output[i]
 
+output_test['other']=0
+for i in output_train.columns.values.tolist():
+    X_train[i]=output_train[i]
+    
+for i in output_test.columns.values.tolist():
+    if i in output_train.columns.values.tolist():
+        X_test[i]=output_test[i]
+    else:
+        X_test['others']+=output_test[i]
+    
+output_train['other']=0
 X_train = X_train.drop(['Genres'], axis=1)
+print('otherrrrr')
+print(X_test)
 #data=pd.concat(output)
 #errrrror reason explain!
 
@@ -252,7 +287,14 @@ plt.show()
 
 print(df_data_cpycpy['In-app Purchases'].isna().sum())
 
-print(X_train['User Rating Count'].corr(data['Average User Rating']))
-
-
-df_data_cpycpy.to_csv('preProc1.csv', index=False)
+#print(X_train['User Rating Count'].corr(data['Average User Rating']))
+# eidited
+X_train = df_data_cpycpy
+X_train.to_csv('preProc1.csv', index=False)
+#print(Y_train['Average User Rating'].type())
+#Linear reggression    ValueError comment before testing 
+model = LinearRegression()
+model.fit(X_train, Y_train)
+y_pred = model.predict(X_test)
+r_sq = model.score(X_train, Y_train)
+print(f"coefficient of determination: {r_sq}")
