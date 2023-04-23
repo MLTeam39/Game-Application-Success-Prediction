@@ -1,31 +1,32 @@
-# All Packages
+##################################All Packages##################################
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import preprocessingFunctions as preFun
 import statistics
-from scipy.stats import norm
-from sklearn import linear_model
-from sklearn import metrics
+# from scipy.stats import norm
+# from sklearn import linear_model
+# from sklearn import metrics
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
-from scipy import stats
+# from scipy import stats
 
-# Loading Data
+##################################Loading Data##################################
 data = pd.read_csv('games-regression-dataset.csv')
 X = data.iloc[:, :-1]
 Y = data.iloc[:, -1]
 
-# Split Data
+##################################Split Data##################################
 X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=0)
 X_train.to_csv('TrainData.csv', index=False)
 X_test.to_csv('TestData.csv', index=False)
+X_train = pd.read_csv('TrainData.csv')
 
-# Preprocessing
-# Check Nulls and Unique Percentage
+##################################Preprocessing##################################
+# Check All features Nulls and Unique Percentage
 X_train = preFun.feature_selection(X_train)
 
-# User Rating Count
+##################################User Rating Count##################################
 # print(X_train['User Rating Count'])
 X_train = preFun.feature_scaling(X_train, 'User Rating Count')
 # print(X_train['User Rating Count'])
@@ -35,7 +36,7 @@ X_train = preFun.feature_scaling(X_train, 'User Rating Count')
 # scaledFeat = scaler.transform(tempFeat)
 # df_data_cpy['User Rating Count'] = scaledFeat.reshape(1, -1)[0]
 
-# Price
+##################################Price##################################
 PriceCol = X_train['Price']
 # make feature scaling to Price column
 # TODO: Scaling from 0 -> 1 or -1 -> 1
@@ -43,7 +44,7 @@ X_train = preFun.feature_scaling(X_train, 'Price')
 # ResPrice = (PriceCol - PriceCol.min())/(PriceCol.max()-PriceCol.min())
 # X_train['Price'] = ResPrice
 
-# In-app Purchases
+##################################In-app Purchases##################################
 # X_train['In-app Purchases'].fillna(X_train['In-app Purchases'].mode()[0], inplace=True)
 #
 # splitted = []
@@ -71,7 +72,7 @@ X_train = preFun.feature_scaling(X_train, 'Price')
 #
 # # print(X_train['In-app Purchases'].isna().sum())
 
-# Developer
+##################################Developer##################################
 # Feature Encoding
 # print(X_train['Developer'])
 
@@ -82,31 +83,49 @@ X_train['Developer'] = enc.transform(list(X_train['Developer'].values))
 X_train = preFun.feature_scaling(X_train, 'Developer')
 # print(X_train['Developer'])
 
-# Age Rating
+##################################Age Rating##################################
 # TODO: Explain!
 X_train.loc[X_train['Age Rating'].isin(['17+']), 'Age Rating'] = '3'
 X_train.loc[X_train['Age Rating'].isin(['12+']), 'Age Rating'] = '2'
 X_train.loc[X_train['Age Rating'].isin(['9+']), 'Age Rating'] = '1'
 X_train.loc[X_train['Age Rating'].isin(['4+']), 'Age Rating'] = '0'
 
-# Languages
-valFreq = X_train['Languages'].value_counts()
-most_frequent = valFreq
-X_train['Languages'].fillna('EN', inplace=True)
-X_test['Languages'].fillna('EN', inplace=True)
-print('null', X_test['Languages'].isnull().sum())  # there is 11 missing value
+##################################Languages##################################
+valFreq =X_train['Languages'].value_counts() # most_frequent is'EN'=2728
+most_frequent = str(valFreq)
+X_train.loc[:]['Languages'].fillna(most_frequent, inplace=True)
+X_test.loc[:]['Languages'].fillna(most_frequent, inplace=True)
+print('null', X_test['Languages'].isnull().sum()) # there is 11 missing value
 languages = []
 for row in X_train['Languages']:
     languages.append(len(row.split(', ')))
 
-X_train['Languages'] = languages
-print(X_train['Languages'])
+# TODO: Check warning
+X_train.loc[:, 'Languages'] = languages
+print("New Language", X_train['Languages'])
+
+##################################Dates##################################
+# Reformat Date
+# X_train['Original Release Date'] = pd.to_datetime(X_train['Original Release Date'], dayfirst=True)
+# X_train['Original Release Year'] = X_train['Original Release Date'].dt.year
+# X_train['Original Release Month'] = X_train['Original Release Date'].dt.month
+# X_train['Original Release Day'] = X_train['Original Release Date'].dt.day
+#
+# X_train['Original Release Year'] = X_train['Original Release Year'].astype(float)
+# X_train['Original Release Month'] = X_train['Original Release Month'].astype(float)
+# X_train['Original Release Day'] = X_train['Original Release Day'].astype(float)
+# print(data['Original Release Year'].corr(data['Average User Rating']))
+# X_train['Current Version Release Date'] = pd.to_datetime(X_train['Current Version Release Date'], dayfirst=True)
+# X_train['Current Version Release Year'] = X_train['Current Version Release Date'].dt.year
+# X_train['Current Version Release Month'] = X_train['Current Version Release Date'].dt.month
+# X_train['Current Version Release Day'] = X_train['Current Version Release Date'].dt.day
+# X_train['Current Version Release Year'] = X_train['Current Version Release Year'].astype(float)
+# X_train['Current Version Release Month'] = X_train['Current Version Release Month'].astype(float)
+# X_train['Current Version Release Day'] = X_train['Current Version Release Day'].astype(float)
+# # print(data['Original Release Date'].corr(data['Average User Rating']))
 
 
-X_train = X_train.drop(['Languages'], axis=1)
-
-
-#len(X_train['ID']) - len(X_train['Name'].drop_duplicates())
+# len(X_train['ID']) - len(X_train['Name'].drop_duplicates())
 # """count duplicates in Names"""
 # print(X_train)
 # #Name
