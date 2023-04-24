@@ -49,7 +49,7 @@ preFun.feature_scaling(X_train,X_test, 'User Rating Count')
 PriceCol = X_train['Price']
 # make feature scaling to Price column
 # TODO: Scaling from 0 -> 1 or -1 -> 1
-preFun.feature_scaling(X_train,X_test, 'Price')
+preFun.feature_scaling(X_train, X_test, 'Price')
 # ResPrice = (PriceCol - PriceCol.min())/(PriceCol.max()-PriceCol.min())
 # X_train['Price'] = ResPrice
 

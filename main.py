@@ -1,15 +1,17 @@
 ##################################All Packages##################################
 import numpy as np
 import pandas as pd
+import statistics
 import matplotlib.pyplot as plt
 import preprocessingFunctions as preFun
-import statistics
-# from scipy.stats import norm
-# from sklearn import linear_model
-# from sklearn import metrics
+from scipy import stats
+from scipy.stats import norm
+from sklearn import linear_model
+from sklearn import metrics
 from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import MaxAbsScaler
 from sklearn.model_selection import train_test_split
-# from scipy import stats
+from sklearn.linear_model import LinearRegression
 
 ##################################Loading Data##################################
 data = pd.read_csv('games-regression-dataset.csv')
@@ -25,24 +27,21 @@ X_train = pd.read_csv('TrainData.csv')
 ##################################Preprocessing##################################
 # Check All features Nulls and Unique Percentage
 X_train = preFun.feature_selection(X_train)
+print('X_train Columns after dropping : ', X_train.columns.values, "\n")
 
 ##################################User Rating Count##################################
+#print(X_train['User Rating Count'])
+preFun.feature_scaling(X_train, X_test, 'User Rating Count')
+# X_train = preFun.feature_scaling(X_train, 'User Rating Count')
 # print(X_train['User Rating Count'])
-X_train = preFun.feature_scaling(X_train, 'User Rating Count')
-# print(X_train['User Rating Count'])
-# tempFeat = np.array(X_train['User Rating Count']).reshape(-1, 1)
-# scaler = MaxAbsScaler()
-# scaler.fit(tempFeat)
-# scaledFeat = scaler.transform(tempFeat)
-# df_data_cpy['User Rating Count'] = scaledFeat.reshape(1, -1)[0]
 
 ##################################Price##################################
-PriceCol = X_train['Price']
-# make feature scaling to Price column
-# TODO: Scaling from 0 -> 1 or -1 -> 1
-X_train = preFun.feature_scaling(X_train, 'Price')
-# ResPrice = (PriceCol - PriceCol.min())/(PriceCol.max()-PriceCol.min())
-# X_train['Price'] = ResPrice
+# PriceCol = X_train['Price']
+# # make feature scaling to Price column
+# # TODO: Scaling from 0 -> 1 or -1 -> 1
+# X_train = preFun.feature_scaling(X_train, 'Price')
+# # ResPrice = (PriceCol - PriceCol.min())/(PriceCol.max()-PriceCol.min())
+# # X_train['Price'] = ResPrice
 
 ##################################In-app Purchases##################################
 # X_train['In-app Purchases'].fillna(X_train['In-app Purchases'].mode()[0], inplace=True)
@@ -73,36 +72,36 @@ X_train = preFun.feature_scaling(X_train, 'Price')
 # # print(X_train['In-app Purchases'].isna().sum())
 
 ##################################Developer##################################
-# Feature Encoding
-# print(X_train['Developer'])
-
-enc = LabelEncoder()
-enc.fit(list(X_train['Developer'].values))
-X_train['Developer'] = enc.transform(list(X_train['Developer'].values))
-
-X_train = preFun.feature_scaling(X_train, 'Developer')
-# print(X_train['Developer'])
+# # Feature Encoding
+# # print(X_train['Developer'])
+#
+# enc = LabelEncoder()
+# enc.fit(list(X_train['Developer'].values))
+# X_train['Developer'] = enc.transform(list(X_train['Developer'].values))
+#
+# X_train = preFun.feature_scaling(X_train, 'Developer')
+# # print(X_train['Developer'])
 
 ##################################Age Rating##################################
-# TODO: Explain!
-X_train.loc[X_train['Age Rating'].isin(['17+']), 'Age Rating'] = '3'
-X_train.loc[X_train['Age Rating'].isin(['12+']), 'Age Rating'] = '2'
-X_train.loc[X_train['Age Rating'].isin(['9+']), 'Age Rating'] = '1'
-X_train.loc[X_train['Age Rating'].isin(['4+']), 'Age Rating'] = '0'
+# # TODO: Explain!
+# X_train.loc[X_train['Age Rating'].isin(['17+']), 'Age Rating'] = '3'
+# X_train.loc[X_train['Age Rating'].isin(['12+']), 'Age Rating'] = '2'
+# X_train.loc[X_train['Age Rating'].isin(['9+']), 'Age Rating'] = '1'
+# X_train.loc[X_train['Age Rating'].isin(['4+']), 'Age Rating'] = '0'
 
 ##################################Languages##################################
-valFreq =X_train['Languages'].value_counts() # most_frequent is'EN'=2728
-most_frequent = str(valFreq)
-X_train.loc[:]['Languages'].fillna(most_frequent, inplace=True)
-X_test.loc[:]['Languages'].fillna(most_frequent, inplace=True)
-print('null', X_test['Languages'].isnull().sum()) # there is 11 missing value
-languages = []
-for row in X_train['Languages']:
-    languages.append(len(row.split(', ')))
-
-# TODO: Check warning
-X_train.loc[:, 'Languages'] = languages
-print("New Language", X_train['Languages'])
+# valFreq = X_train['Languages'].value_counts()  # most_frequent is'EN'=2728
+# most_frequent = str(valFreq)
+# X_train.loc[:]['Languages'].fillna(most_frequent, inplace=True)
+# X_test.loc[:]['Languages'].fillna(most_frequent, inplace=True)
+# print('null', X_test['Languages'].isnull().sum())  # there is 11 missing value
+# languages = []
+# for row in X_train['Languages']:
+#     languages.append(len(row.split(', ')))
+#
+# # TODO: Check warning
+# X_train.loc[:, 'Languages'] = languages
+# print("New Language", X_train['Languages'])
 
 ##################################Dates##################################
 # Reformat Date
