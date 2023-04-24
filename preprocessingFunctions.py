@@ -1,3 +1,10 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Sun Apr 23 10:22:45 2023
+
+@author: Tech
+"""
+
 import numpy as np
 from sklearn.preprocessing import MaxAbsScaler
 
@@ -32,14 +39,17 @@ def feature_selection(cols):
     return cols
 
 
-def feature_scaling(cols, col_name):
-    temp_feat = np.array(cols[col_name]).reshape(-1, 1)
+def feature_scaling(x,y, col_name):
+    temp_feat_x = np.array(x[col_name]).reshape(-1, 1)
+    temp_feat_y = np.array(y[col_name]).reshape(-1, 1)
     # TODO: Check scaling range
     scaler = MaxAbsScaler()
-    scaler.fit(temp_feat)
-    scaled_feat = scaler.transform(temp_feat)
-    cols[col_name] = scaled_feat.reshape(1, -1)[0]
+    scaler.fit(temp_feat_x)
+    scaled_feat_x = scaler.transform(temp_feat_x)
+    scaled_feat_y = scaler.transform(temp_feat_y)
+    x[col_name] = scaled_feat_x.reshape(1, -1)[0]
+    y[col_name] = scaled_feat_y.reshape(1, -1)[0]
     # TODO: Scaling from 0 -> 1 or -1 -> 1
     # ResPrice = (PriceCol - PriceCol.min()) / (PriceCol.max() - PriceCol.min())
     # X_train['Price'] = ResPrice
-    return cols
+    
