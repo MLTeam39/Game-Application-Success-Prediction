@@ -75,7 +75,7 @@ X_train.loc[X_train['Age Rating'].isin(['12+']), 'Age Rating'] = 3
 X_train.loc[X_train['Age Rating'].isin(['9+']), 'Age Rating'] = 2
 X_train.loc[X_train['Age Rating'].isin(['4+']), 'Age Rating'] = 1
 
-notInRate = ['4+','9+','12+','17+']
+notInRate = ['4+', '9+', '12+', '17+']
 col = X_test['Age Rating']
 for i  in range(len(col.index)):
     if col.iloc[i] not in notInRate:

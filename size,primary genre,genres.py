@@ -6,7 +6,6 @@
 
 import numpy as np
 import pandas as pd
-import seaborn as sns
 import matplotlib.pyplot as plt
 from sklearn import linear_model
 from sklearn import metrics
@@ -21,7 +20,7 @@ from sklearn import preprocessing
 from sklearn.preprocessing import MaxAbsScaler
 
 #Load data
-data = pd.read_csv("C:\\Users\\tasne\\Downloads\\games-regression-dataset.csv")
+data = pd.read_csv("games-regression-dataset.csv")
 
 
 ##########################################
@@ -41,7 +40,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size = 0.20,shuff
 ##########################################
 ##feature scaling
 ##'Size'
-Size_new=pd.read_csv("C:\\Users\\tasne\\Downloads\\games-regression-dataset.csv",usecols=['Size'])
+Size_new=pd.read_csv("games-regression-dataset.csv",usecols=['Size'])
 
 #print(data['Size'].isna().sum())
 
@@ -57,8 +56,8 @@ data['Size'] = Size_new['Size']
 ##########################################
 ##'Primary Genre'
 ##'Genres'
-PrimaryGenre =pd.read_csv("C:\\Users\\tasne\\Downloads\\games-regression-dataset.csv",usecols=['Primary Genre'])
-Genres =pd.read_csv("C:\\Users\\tasne\\Downloads\\games-regression-dataset.csv",usecols=['Genres'])
+PrimaryGenre =pd.read_csv("games-regression-dataset.csv",usecols=['Primary Genre'])
+Genres =pd.read_csv("games-regression-dataset.csv",usecols=['Genres'])
 
 count =0
 
