@@ -1,5 +1,5 @@
-import numpy as np
 import joblib
+import numpy as np
 from sklearn.preprocessing import MaxAbsScaler
 
 # TODO: Test

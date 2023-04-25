@@ -1,9 +1,12 @@
 ##################################All Packages##################################
+import numpy
+
 import numpy as np
 import pandas as pd
 import statistics
 import matplotlib.pyplot as plt
 import preprocessingFunctions as preFun
+import testPreprocessing as testPre
 from scipy import stats
 from scipy.stats import norm
 from sklearn import linear_model
@@ -42,6 +45,8 @@ print('X_train Columns after dropping : ', X_train.columns.values, '\n')
 
 ##################################User Rating Count##################################
 # print(X_train['User Rating Count'])
+# null means below 5 (1+2+3+4/5 = 2)
+X_train['User Rating Count'].fillna(2, inplace=True)
 # TODO: Scaling from 0 -> 1 or -1 -> 1
 X_train = preFun.feature_scaling(X_train, 'User Rating Count')
 # print(X_train['User Rating Count'])
@@ -94,11 +99,11 @@ X_train['Developer'] = developerEnc.fit_transform(X_train['Developer'])
 np.save('preprocessingData\\Developer Encoder.npy', developerEnc.classes_, allow_pickle=True)
 
 # TODO: Test
-# encoder = LabelEncoder()
-# encoder.classes_ = np.load('Developer Encoder.npy', allow_pickle=True)
-# X_test['Developer'] = X_test['Developer'].map(lambda s: 'unknown' if s not in encoder.classes_ else s)
-# encoder.classes_ = np.append(encoder.classes_, 'unknown')
-# newTest = encoder.transform(X_test['Developer'])
+encoder = LabelEncoder()
+encoder.classes_ = np.load('preprocessingData\\Developer Encoder.npy', allow_pickle=True)
+X_test['Developer'] = X_test['Developer'].map(lambda s: 'unknown' if s not in encoder.classes_ else s)
+encoder.classes_ = np.append(encoder.classes_, 'unknown')
+X_test['Developer'] = encoder.transform(X_test['Developer'])
 
 
 X_train = preFun.feature_scaling(X_train, 'Developer')
@@ -111,18 +116,22 @@ X_train.loc[X_train['Age Rating'].isin(['12+']), 'Age Rating'] = 3
 X_train.loc[X_train['Age Rating'].isin(['9+']), 'Age Rating'] = 2
 X_train.loc[X_train['Age Rating'].isin(['4+']), 'Age Rating'] = 1
 
+X_train['Age Rating'] = X_train['Age Rating'].astype(np.int64)
+
 # TODO: Test
 notInRate = ['4+', '9+', '12+', '17+']
 col = X_test['Age Rating']
 for i in range(len(col.index)):
     if col.iloc[i] not in notInRate:
-        col.iloc[i] = 0
+        col.iloc[i] = 0.0
 
 X_test['Age Rating'] = col
 X_test.loc[X_test['Age Rating'].isin(['17+']), 'Age Rating'] = 4
 X_test.loc[X_test['Age Rating'].isin(['12+']), 'Age Rating'] = 3
 X_test.loc[X_test['Age Rating'].isin(['9+']), 'Age Rating'] = 2
 X_test.loc[X_test['Age Rating'].isin(['4+']), 'Age Rating'] = 1
+
+X_test['Age Rating'] = X_train['Age Rating'].astype(np.int64)
 
 ##################################Languages##################################
 # print(X_train['Languages'])
@@ -192,15 +201,18 @@ for i in output_test.columns.values.tolist():
         X_test['others'] += output_test[i]
 
 
+for i in output_train.columns.values.tolist():
+    if i not in X_test.columns.values.tolist():
+        X_test[i] = '0'
 
-output_train['other'] = 0
+X_train['others'] = 0
 X_train = X_train.drop(['Genres'], axis=1)
 # TODO: Test
 print('unseenData : ', unseenData)
-print(X_test['Genres'][191])
-print(X_test['others'][191])
-print(X_test['Genres'][696])
-print(X_test['others'][696])
+print('row 191 genres: ', X_test['Genres'][191])
+print('row 191 others: ', X_test['others'][191])
+print('row 696 genres: ', X_test['Genres'][696])
+print('row 696 others: ', X_test['others'][696])
 X_test = X_test.drop(['Genres'], axis=1)
 
 ##################################Dates##################################
@@ -249,5 +261,46 @@ X_test = X_test.drop(['Current Version Release Date'], axis=1)
 
 ########################################################################################################################################
 
+# print(X_test.columns)
+X_test = testPre.drop_test(X_test)
+# print(X_test.columns)
+
+X_test = testPre.scaler(X_test, 'Developer')
+X_test = testPre.scaler(X_test, 'Price')
+X_test = testPre.scaler(X_test, 'Size')
+X_test = testPre.scaler(X_test, 'User Rating Count')
+
 X_train.to_csv('datasets\\PreprocessedTrain.csv', index=False)
 X_test.to_csv('datasets\\PreprocessedTest.csv', index=False)
+
+##################################Correlation##################################
+for i in X_train:
+    print(i, type(X_train[i][0]))
+    print(X_train[i].corr(Y_train))
+
+##################################Regression##################################
+# print(X_train.columns)
+# print(X_test.columns)
+
+X_test = X_test.reindex(columns=X_train.columns)
+
+"""Linear reg """
+model = LinearRegression()
+X = np.expand_dims(X_train['Current Version Release Year'], axis=1)
+Y = np.expand_dims(Y_train, axis=1)
+X_test_year = np.expand_dims(X_test['Current Version Release Year'], axis=1)
+model.fit(X, Y)
+y_pred = model.predict(X_test_year)
+print('Mean Square Error', metrics.mean_squared_error(Y_test, y_pred))
+print('Accuracy', "%.2f" % (metrics.r2_score(Y_test, y_pred)*100), '%')
+# print(f"coefficient of determination: {r_sq}")
+
+"""multiple reg"""
+
+regr = linear_model.LinearRegression()
+regr.fit(X_train, Y_train)
+predicted = regr.predict(X_test)
+y_pred = regr.predict(X_test)
+print('Mean Square Error', metrics.mean_squared_error(np.asarray(Y_test), y_pred))
+print('Accuracy', "%.2f" % (metrics.r2_score(Y_test, y_pred)*100), '%')
+# compare between expected and trained answers
