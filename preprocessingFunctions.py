@@ -7,7 +7,6 @@ from sklearn.preprocessing import MaxAbsScaler
 # TODO: Test
 droppedCols = []
 
-
 def count_nulls(col, col_name):
     null_percentage = col.isna().sum() / len(col) * 100
     print(col_name, "Null Percentage =", "%.2f" % null_percentage, "%")
@@ -63,11 +62,9 @@ def feature_scaling(x_train, col_name):
 
     return x_train
 
-
 def remove_numbers(text):
     result = re.sub(r'\d+', '', text)
     return result
-
 
 def remove_punc(string):
     punc = '''!()-[]{};:'"\, <>./?@#$%^&*_~'''
@@ -76,11 +73,12 @@ def remove_punc(string):
             string = string.replace(ele, '')
     return string
 
-
 def remove_NewLine(text):
-    text = text.replace('\\n', '')
+    text =  text.replace('\\n', '')
     text = text.replace('\n', '')
     text = text.replace('\\u', '')
     text = text.replace('\\t', '')
     text = text.replace('\\x', '')
-    return text
+    return  text
+
+
