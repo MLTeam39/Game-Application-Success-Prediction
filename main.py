@@ -2,7 +2,7 @@
 import numpy as np
 import pandas as pd
 import statistics
-import matplotlib as plt
+import matplotlib.pyplot as plt
 import preprocessingFunctions as preFun
 import testPreprocessing as testPre
 from sklearn import linear_model
@@ -316,9 +316,20 @@ Y = np.expand_dims(Y_train, axis=1)
 X_test_year = np.expand_dims(X_test['Current Version Release Year'], axis=1)
 model.fit(X, Y)
 y_pred = model.predict(X_test_year)
+
 print('-Linear Regression:')
 print('Mean Square Error', metrics.mean_squared_error(Y_test, y_pred))
 print('Accuracy', "%.4f" % (metrics.r2_score(Y_test, y_pred)), '\n')
+
+plt.figure(figsize=(4, 3))
+ax = plt.axes()
+ax.scatter(X, Y)
+ax.plot(X_test_year, y_pred)
+
+ax.set_xlabel('x')
+ax.set_ylabel('y')
+ax.axis('tight')
+plt.show()
 
 """Multiple Reg"""
 
