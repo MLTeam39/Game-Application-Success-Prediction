@@ -56,7 +56,7 @@ def feature_scaling(x_train, col_name):
 
     # print('X_train before reshaping : \n', scaled_train_col, '\n')
     x_train[col_name] = scaled_train_col.reshape(1, -1)[0]
-    # print('X_train after reshaping : \n', x_train[col_name], '\n')
+    print('X_train after reshaping : \n', x_train[col_name], '\n')
 
     # TODO: Scaling from 0 -> 1 or -1 -> 1
     # ResPrice = (PriceCol - PriceCol.min()) / (PriceCol.max() - PriceCol.min())

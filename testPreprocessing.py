@@ -15,3 +15,10 @@ def scaler(x, col_name):
     scaler = joblib.load(scaler_path)
     x[col_name] = scaler.transform(reshaped_test_col)
     return x
+
+
+def checkExistence(gen, genres):
+    if gen in genres.values:
+        return gen
+    else:
+        return 'unknown'
