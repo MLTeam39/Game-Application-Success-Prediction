@@ -365,6 +365,24 @@ print('-Polynomail Regression:')
 print('Mean Square Error', metrics.mean_squared_error(Y_test, prediction))
 print('Accuracy', "%.4f" % (metrics.r2_score(Y_test, prediction)), '\n')
 
+# Fitting Polynomial Regression to the dataset
+X=np.array(X_train['Current Version Release Year']).reshape(-1, 1)
+Y=np.array(Y_train).reshape(-1, 1)
+poly = PolynomialFeatures(degree=4)
+X_poly = poly.fit_transform(X)
+poly.fit(X_poly, Y)
+lin2 = LinearRegression()
+lin2.fit(X_poly, Y)
+# Visualising the Polynomial Regression results
+plt.scatter(X, Y, color='blue')
+
+plt.plot(X, lin2.predict(poly.fit_transform(X)), color='red')
+plt.title('Polynomial Regression')
+plt.xlabel('Temperature')
+plt.ylabel('Pressure')
+
+plt.show()
+
 """Gradient Boosting Reg"""
 est = GradientBoostingRegressor(n_estimators=46, max_depth=3)
 
