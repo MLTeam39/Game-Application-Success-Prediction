@@ -9,3 +9,4 @@
 - matplotlib : 3.7.0
 - scikit-learn : 1.2.2
 - joblib : 1.2.0
+- nltk : 3.8.1

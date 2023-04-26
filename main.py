@@ -1,16 +1,10 @@
 ##################################All Packages##################################
-import types
-
-import numpy
-
 import numpy as np
 import pandas as pd
 import statistics
-import matplotlib.pyplot as plt
+import matplotlib as plt
 import preprocessingFunctions as preFun
 import testPreprocessing as testPre
-from scipy import stats
-from scipy.stats import norm
 from sklearn import linear_model
 from sklearn import metrics
 from sklearn.preprocessing import LabelEncoder
@@ -19,11 +13,11 @@ from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import GradientBoostingRegressor
 
-import joblib
-from sklearn.preprocessing import MaxAbsScaler
+
+filledColumns = {}
 
 ##################################Loading Data##################################
-data = pd.read_csv('datasets\\games-regression-dataset.csv')
+data = pd.read_csv('games-regression-dataset.csv')
 X = data.iloc[:, :-1]
 Y = data.iloc[:, -1]
 
@@ -35,11 +29,11 @@ trainData['Average User Rating'] = Y_train
 testData = X_test
 testData['Average User Rating'] = Y_test
 
-trainData.to_csv('datasets\\TrainData.csv', index=False)
-testData.to_csv('datasets\\TestData.csv', index=False)
+trainData.to_csv('TrainData.csv', index=False)
+testData.to_csv('TestData.csv', index=False)
 
-trainData = pd.read_csv('datasets\\TrainData.csv')
-testData = pd.read_csv('datasets\\TestData.csv')
+trainData = pd.read_csv('TrainData.csv')
+testData = pd.read_csv('TestData.csv')
 X_train = trainData.iloc[:, :-1]
 Y_train = trainData.iloc[:, -1]
 X_test = testData.iloc[:, :-1]
@@ -48,13 +42,15 @@ Y_test = testData.iloc[:, -1]
 ##################################Preprocessing##################################
 # Check All features Nulls and Unique Percentage
 X_train = preFun.feature_selection(X_train)
-print('X_train Columns after dropping : ', X_train.columns.values, '\n')
+# print('X_train Columns after dropping : ', X_train.columns.values, '\n')
 
 ##################################User Rating Count##################################
 # print(X_train['User Rating Count'])
+
 # null means below 5 (1+2+3+4/5 = 2)
 X_train['User Rating Count'].fillna(2, inplace=True)
-# TODO: Scaling from 0 -> 1 or -1 -> 1
+filledColumns['User Rating Count'] = 2
+
 X_train = preFun.feature_scaling(X_train, 'User Rating Count')
 # print(X_train['User Rating Count'])
 
@@ -67,9 +63,8 @@ X_train = preFun.feature_scaling(X_train, 'Price')
 # Fill nulls
 # print(X_train['In-app Purchases'])
 X_train['In-app Purchases'].fillna(X_train['In-app Purchases'].mode()[0], inplace=True)
+filledColumns['In-app Purchases'] = X_train['In-app Purchases'].mode()[0]
 # print(X_train['In-app Purchases'])
-# TODO: Test
-X_test['In-app Purchases'].fillna(X_train['In-app Purchases'].mode()[0], inplace=True)
 
 splittedRow = []
 newCol = []
@@ -80,43 +75,17 @@ for row in X_train['In-app Purchases']:
 X_train['In-app Purchases'] = newCol
 # print(X_train['In-app Purchases'])
 
-# TODO: Test
-testRow = []
-testCol = []
-for test in X_test['In-app Purchases']:
-    testRow = [float(v) for v in test.split(', ')]
-    testCol.append(statistics.mean(testRow))
-
-X_test['In-app Purchases'] = testCol
-
-# for i in X_train['In-app Purchases']:
-#     splittedRow = i.split(', ')
-#     print(splittedRow)
-#
-#     for item in splittedRow:
-#         newRow.append(float(item))
-#
-#     newCol.append(statistics.mean(newRow))
-
 ##################################Developer##################################
 # Feature Encoding
 # print(X_train['Developer'])
 developerEnc = LabelEncoder()
 X_train['Developer'] = developerEnc.fit_transform(X_train['Developer'])
-np.save('preprocessingData\\Developer Encoder.npy', developerEnc.classes_, allow_pickle=True)
-
-# TODO: Test
-encoder = LabelEncoder()
-encoder.classes_ = np.load('preprocessingData\\Developer Encoder.npy', allow_pickle=True)
-X_test['Developer'] = X_test['Developer'].map(lambda s: 'unknown' if s not in encoder.classes_ else s)
-encoder.classes_ = np.append(encoder.classes_, 'unknown')
-X_test['Developer'] = encoder.transform(X_test['Developer'])
+np.save('Developer Encoder.npy', developerEnc.classes_, allow_pickle=True)
 
 X_train = preFun.feature_scaling(X_train, 'Developer')
 # print(X_train['Developer'])
 
 ##################################Age Rating##################################
-# TODO: approximate the input to the nearest value ex 15+ is near to 17+
 X_train.loc[X_train['Age Rating'].isin(['17+']), 'Age Rating'] = 4
 X_train.loc[X_train['Age Rating'].isin(['12+']), 'Age Rating'] = 3
 X_train.loc[X_train['Age Rating'].isin(['9+']), 'Age Rating'] = 2
@@ -124,26 +93,12 @@ X_train.loc[X_train['Age Rating'].isin(['4+']), 'Age Rating'] = 1
 
 X_train['Age Rating'] = X_train['Age Rating'].astype(np.int64)
 
-# TODO: Test
-notInRate = ['4+', '9+', '12+', '17+']
-col = X_test['Age Rating']
-for i in range(len(col.index)):
-    if col.iloc[i] not in notInRate:
-        col.iloc[i] = 0.0
-
-X_test['Age Rating'] = col
-X_test.loc[X_test['Age Rating'].isin(['17+']), 'Age Rating'] = 4
-X_test.loc[X_test['Age Rating'].isin(['12+']), 'Age Rating'] = 3
-X_test.loc[X_test['Age Rating'].isin(['9+']), 'Age Rating'] = 2
-X_test.loc[X_test['Age Rating'].isin(['4+']), 'Age Rating'] = 1
-
-X_test['Age Rating'] = X_train['Age Rating'].astype(np.int64)
-
 ##################################Languages##################################
 # print(X_train['Languages'])
 valFreq = X_train['Languages'].value_counts()  # most_frequent is'EN'=2728
 most_frequent = str(valFreq)
 X_train['Languages'].fillna(most_frequent, inplace=True)
+filledColumns['Languages'] = most_frequent
 
 languages = []
 for row in X_train['Languages']:
@@ -152,15 +107,6 @@ for row in X_train['Languages']:
 
 X_train['Languages'] = languages
 # print(X_train['Languages'])
-
-# TODO: Test
-X_test['Languages'].fillna(most_frequent, inplace=True)
-languages = []
-for row in X_test['Languages']:
-    # print(len(row.split()))
-    languages.append(len(row.split(', ')))
-
-X_test['Languages'] = languages
 
 ##################################Size##################################
 # print(X_train['Size'])
@@ -171,8 +117,8 @@ X_train = preFun.feature_scaling(X_train, 'Size')
 # Primary Genre vs Genres
 # PrimaryGenre = X_train['Primary Genre']
 # Genres = X_train['Genres']
-PrimaryGenre = pd.read_csv("datasets\\games-regression-dataset.csv", usecols=['Primary Genre'])
-Genres = pd.read_csv("datasets\\games-regression-dataset.csv", usecols=['Genres'])
+PrimaryGenre = pd.read_csv("games-regression-dataset.csv", usecols=['Primary Genre'])
+Genres = pd.read_csv("games-regression-dataset.csv", usecols=['Genres'])
 
 count = 0
 
@@ -186,8 +132,6 @@ flag = "%.2f" % (count / len(PrimaryGenre) * 100)
 
 if float(flag) >= 99:
     X_train = X_train.drop(['Primary Genre'], axis=1)
-    # TODO: Test
-    X_test = X_test.drop(['Primary Genre'], axis=1)
 
 # # Genres
 # output_train = X_train['Genres'].str.get_dummies(sep=', ')
@@ -228,24 +172,7 @@ for row in X_train['Genres']:
 X_train['Genres'] = eachRow
 # print(X_train['Genres'])
 
-
-# Test combine
-# genresFreq.append('unknown', 0.0)
-genresFreq.loc['unknown'] = 0.0  # adding a row
-# print('genres Frequency : \n', genresFreq)
-
-testRows = []
-# print('genres', genres)
-for row in X_test['Genres']:
-    genreRow = [testPre.checkExistence(gen, genres) for gen in row.split(', ')]
-    # print(genreRow)
-    testRows.append(genresFreq[genreRow].sum())
-
-print(X_test['Genres'])
-X_test['Genres'] = testRows
-print(X_test['Genres'])
-
-# TODO: Test
+# Test
 # unseenData = []
 # # print(X_test['Genres'])
 # output_test = X_test['Genres'].str.get_dummies(sep=', ')
@@ -298,23 +225,6 @@ X_train['Current Version Release Day'] = X_train['Current Version Release Date']
 # print(data['Original Release Date'].corr(data['Average User Rating']))
 X_train = X_train.drop(['Current Version Release Date'], axis=1)
 
-# TODO: Test
-# print(X_test['Original Release Date'])
-X_test['Original Release Date'] = pd.to_datetime(X_test['Original Release Date'], dayfirst=True)
-X_test['Original Release Year'] = X_test['Original Release Date'].dt.year
-X_test['Original Release Month'] = X_test['Original Release Date'].dt.month
-X_test['Original Release Day'] = X_test['Original Release Date'].dt.day
-# print(X_test['Original Release Year'])
-# print(X_test['Original Release Month'])
-# print(X_test['Original Release Day'])
-X_test = X_test.drop(['Original Release Date'], axis=1)
-
-X_test['Current Version Release Date'] = pd.to_datetime(X_test['Current Version Release Date'], dayfirst=True)
-X_test['Current Version Release Year'] = X_test['Current Version Release Date'].dt.year
-X_test['Current Version Release Month'] = X_test['Current Version Release Date'].dt.month
-X_test['Current Version Release Day'] = X_test['Current Version Release Date'].dt.day
-X_test = X_test.drop(['Current Version Release Date'], axis=1)
-
 ##################################Average User Rating##################################
 
 # # Y_train = preFun.feature_scaling(Y_train, 'Average User Rating')
@@ -325,44 +235,72 @@ X_test = X_test.drop(['Current Version Release Date'], axis=1)
 # # TODO: Check scaling range
 # scaler = MaxAbsScaler()
 # scaled_train_col = scaler.fit_transform(reshaped_train_col)
-# scaler_path = 'preprocessingData\\' + 'Average User Rating' + ' Scaler.gz'
+# scaler_path = 'Average User Rating' + ' Scaler.gz'
 # joblib.dump(scaler, scaler_path)
 # # TODO: Test
 # # my_scaler = joblib.load('scaler.gz')
 # # scaled_test_col = my_scaler.transform(reshaped_test_col)
 #
 # # print('X_train before reshaping : \n', scaled_train_col, '\n')
-# Y_train = scaled_train_col.reshape(1, -1)
-# Y_train = pd.DataFrame(Y_train, index=['Average User Rating'])
+# Y_train = scaled_train_col.reshape(1, -1)[0]
+# print(type(Y_train))
 # print('Y_train after reshaping : \n', Y_train, '\n')
+# Y_train = pd.Series(Y_train)
 
-########################################################################################################################################
+##################################Test##################################
 
+testPre.filledColumns = filledColumns
 # print(X_test.columns)
 X_test = testPre.drop_test(X_test)
 # print(X_test.columns)
+
+# print(X_test['Languages'].isnull().sum())
+X_test = testPre.fill_nulls(X_test)
+# print(X_test['Languages'].isnull().sum())
+
+X_test = testPre.inApp_test(X_test)
+X_test = testPre.developer_test(X_test)
+X_test = testPre.avgRating_test(X_test)
+X_test = testPre.languages_test(X_test)
+X_test = testPre.primary_test(X_test)
+X_test = testPre.genres_test(X_test, genresFreq, genres)
+X_test = testPre.dates_test(X_test)
+
 
 X_test = testPre.scaler(X_test, 'Developer')
 X_test = testPre.scaler(X_test, 'Price')
 X_test = testPre.scaler(X_test, 'Size')
 X_test = testPre.scaler(X_test, 'User Rating Count')
 
-# # Test
+# # # Test
 # # Y_test = testPre.scaler(Y_test, 'Average User Rating')
 # reshaped_test_col = np.array(Y_test).reshape(-1, 1)
-# scaler_path = 'preprocessingData\\' + 'Average User Rating' + ' Scaler.gz'
+# scaler_path = 'Average User Rating' + ' Scaler.gz'
 # scaler = joblib.load(scaler_path)
 # Y_test = scaler.transform(reshaped_test_col)
 
-
-
-X_train.to_csv('datasets\\PreprocessedTrain.csv', index=False)
-# X_test.to_csv('datasets\\PreprocessedTest.csv', index=False)
+X_train.to_csv('PreprocessedTrain.csv', index=False)
+X_test.to_csv('PreprocessedTest.csv', index=False)
 
 ##################################Correlation##################################
+# Feature Selection
+print('Correlation Results: ')
 for i in X_train:
-    print(i, type(X_train[i][0]))
+    print(i)
     print(X_train[i].corr(Y_train))
+
+# Get the correlation between the features
+corr_data = X_train
+corr_data['Average User Rating'] = Y_train
+corr = corr_data.corr()
+
+top_features = corr.index[abs(corr['Average User Rating']) >= 0.02]
+
+top_features = top_features.delete(-1)
+print('\nTop Features :\n', top_features.values, '\n')
+
+X_train = X_train[top_features]
+X_test = X_test[top_features]
 
 ##################################Regression##################################
 # print(X_train.columns)
@@ -370,42 +308,30 @@ for i in X_train:
 
 X_test = X_test.reindex(columns=X_train.columns)
 
-"""Linear reg """
+"""Linear Reg"""
+
 model = LinearRegression()
 X = np.expand_dims(X_train['Current Version Release Year'], axis=1)
 Y = np.expand_dims(Y_train, axis=1)
 X_test_year = np.expand_dims(X_test['Current Version Release Year'], axis=1)
 model.fit(X, Y)
 y_pred = model.predict(X_test_year)
+print('-Linear Regression:')
 print('Mean Square Error', metrics.mean_squared_error(Y_test, y_pred))
-print('Accuracy', "%.2f" % (metrics.r2_score(Y_test, y_pred)))
-# print(f"coefficient of determination: {r_sq}")
+print('Accuracy', "%.4f" % (metrics.r2_score(Y_test, y_pred)), '\n')
 
-"""multiple reg"""
+"""Multiple Reg"""
 
 regr = linear_model.LinearRegression()
 regr.fit(X_train, Y_train)
 predicted = regr.predict(X_test)
 y_pred = regr.predict(X_test)
+print('-Multiple Regression:')
 print('Mean Square Error', metrics.mean_squared_error(np.asarray(Y_test), y_pred))
-print('Accuracy', "%.2f" % (metrics.r2_score(Y_test, y_pred)))
-# compare between expected and trained answers
+print('Accuracy', "%.4f" % (metrics.r2_score(Y_test, y_pred)), '\n')
 
 
-# Feature Selection
-# Get the correlation between the features
-# corr_data = X_train
-# corr_data['Average User Rating'] = Y_train
-# corr = corr_data.corr()
-#
-# top_features = corr.index[abs(corr['Average User Rating']) >= 0.02]
-#
-# print('columns', top_features)
-#
-# top_features = top_features.delete(-1)
-# X_train_selected = X_train[top_features]
-# X_test_selected = X_test[top_features]
-# Polynomial Regression
+"""Polynomial Reg"""
 
 # Features
 poly_features = PolynomialFeatures(degree=2)
@@ -424,15 +350,17 @@ prediction = poly_model.predict(poly_features.fit_transform(X_test))
 
 # print('Co-efficient of linear regression', poly_model.coef_)
 # print('Intercept of linear regression model', poly_model.intercept_)
+print('-Polynomail Regression:')
 print('Mean Square Error', metrics.mean_squared_error(Y_test, prediction))
-print('Accuracy', "%.2f" % (metrics.r2_score(Y_test, prediction)))
+print('Accuracy', "%.4f" % (metrics.r2_score(Y_test, prediction)), '\n')
 
-# Gradient Boosting Regressor
+"""Gradient Boosting Reg"""
 est = GradientBoostingRegressor(n_estimators=46, max_depth=3)
 
 est.fit(X_train, Y_train)
 # predict class labels
 pred = est.predict(X_test)
 # score on test data (accuracy)
+print('-Gradient Boosting Regressor:')
 print('Mean Square Error', metrics.mean_squared_error(Y_test, pred))
-print('Accuracy', "%.4f" % (metrics.r2_score(Y_test, pred)))
+print('Accuracy', "%.4f" % (metrics.r2_score(Y_test, pred)), '\n')
