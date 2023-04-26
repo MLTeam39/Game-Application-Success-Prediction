@@ -309,27 +309,27 @@ X_test = X_test[top_features]
 X_test = X_test.reindex(columns=X_train.columns)
 
 """Linear Reg"""
+for col in X_train:
+    model = LinearRegression()
+    X = np.expand_dims(X_train[col], axis=1)
+    Y = np.expand_dims(Y_train, axis=1)
+    X_test_col = np.expand_dims(X_test[col], axis=1)
+    model.fit(X, Y)
+    y_pred = model.predict(X_test_col)
 
-model = LinearRegression()
-X = np.expand_dims(X_train['Current Version Release Year'], axis=1)
-Y = np.expand_dims(Y_train, axis=1)
-X_test_year = np.expand_dims(X_test['Current Version Release Year'], axis=1)
-model.fit(X, Y)
-y_pred = model.predict(X_test_year)
+    print('-Linear Regression Using ',col)
+    print('Mean Square Error', metrics.mean_squared_error(Y_test, y_pred))
+    print('Accuracy', "%.4f" % (metrics.r2_score(Y_test, y_pred)), '\n')
 
-print('-Linear Regression:')
-print('Mean Square Error', metrics.mean_squared_error(Y_test, y_pred))
-print('Accuracy', "%.4f" % (metrics.r2_score(Y_test, y_pred)), '\n')
+    plt.figure(figsize=(4, 3))
+    ax = plt.axes()
+    ax.scatter(X, Y)
+    ax.plot(X_test_col, y_pred,color='red')
 
-plt.figure(figsize=(4, 3))
-ax = plt.axes()
-ax.scatter(X, Y)
-ax.plot(X_test_year, y_pred)
-
-ax.set_xlabel('x')
-ax.set_ylabel('y')
-ax.axis('tight')
-plt.show()
+    ax.set_xlabel(col)
+    ax.set_ylabel('Average User Rating')
+    ax.axis('tight')
+    plt.show()
 
 """Multiple Reg"""
 
@@ -365,23 +365,24 @@ print('-Polynomail Regression:')
 print('Mean Square Error', metrics.mean_squared_error(Y_test, prediction))
 print('Accuracy', "%.4f" % (metrics.r2_score(Y_test, prediction)), '\n')
 
-# Fitting Polynomial Regression to the dataset
-X=np.array(X_train['Current Version Release Year']).reshape(-1, 1)
-Y=np.array(Y_train).reshape(-1, 1)
-poly = PolynomialFeatures(degree=4)
-X_poly = poly.fit_transform(X)
-poly.fit(X_poly, Y)
-lin2 = LinearRegression()
-lin2.fit(X_poly, Y)
-# Visualising the Polynomial Regression results
-plt.scatter(X, Y, color='blue')
+for col in X_train:
+    # Fitting Polynomial Regression to the dataset
+    X=np.array(X_train[col]).reshape(-1, 1)
+    Y=np.array(Y_train).reshape(-1, 1)
+    poly = PolynomialFeatures(degree=2)
+    X_poly = poly.fit_transform(X)
+    poly.fit(X_poly, Y)
+    lin2 = LinearRegression()
+    lin2.fit(X_poly, Y)
+    # Visualising the Polynomial Regression results
+    plt.scatter(X, Y, color='blue')
 
-plt.plot(X, lin2.predict(poly.fit_transform(X)), color='red')
-plt.title('Polynomial Regression')
-plt.xlabel('Temperature')
-plt.ylabel('Pressure')
+    plt.plot(X, lin2.predict(poly.fit_transform(X)), color='red')
+    plt.title('Polynomial Regression')
+    plt.xlabel(col)
+    plt.ylabel('Average User Rating')
 
-plt.show()
+    plt.show()
 
 """Gradient Boosting Reg"""
 est = GradientBoostingRegressor(n_estimators=46, max_depth=3)
