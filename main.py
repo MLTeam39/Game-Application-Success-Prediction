@@ -1,36 +1,26 @@
+##################################All Packages##################################
 import numpy as np
 import pandas as pd
 import statistics
-import re
 import matplotlib.pyplot as plt
 import preprocessingFunctions as preFun
 import testPreprocessing as testPre
 from sklearn import linear_model
 from sklearn import metrics
-from collections import Counter
 from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import GradientBoostingRegressor
-from sklearn.feature_extraction.text import CountVectorizer
-import nltk
-from nltk.tokenize import word_tokenize
-from nltk.corpus import stopwords
-from nltk.stem.porter import PorterStemmer
-from nltk.stem import WordNetLemmatizer
 
 filledColumns = {}
-nltk.download('wordnet')
-DesColList = []
-DesColtest = []
-stemmer = PorterStemmer()
-stop_words = set(stopwords.words("english"))
-lemmatizer = WordNetLemmatizer()
+
 ##################################Loading Data##################################
 data = pd.read_csv('games-regression-dataset.csv')
-X = data.iloc[:, :-1]
-Y = data.iloc[:, -1]
+data2 = pd.read_csv('games-classification.csv')
+X = data.drop(["Average User Rating"], axis=1)  # features
+X['Rate'] = data2['Rate']
+Y = data["Average User Rating"]  # label
 
 ##################################Split Data##################################
 X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=0)
@@ -45,6 +35,8 @@ testData.to_csv('TestData.csv', index=False)
 
 trainData = pd.read_csv('TrainData.csv')
 testData = pd.read_csv('TestData.csv')
+trainData = trainData.drop('Rate', axis=1)
+testData = testData.drop('Rate', axis=1)
 X_train = trainData.iloc[:, :-1]
 Y_train = trainData.iloc[:, -1]
 X_test = testData.iloc[:, :-1]
@@ -86,21 +78,6 @@ for row in X_train['In-app Purchases']:
 X_train['In-app Purchases'] = newCol
 # print(X_train['In-app Purchases'])
 
-##################################Description##################################
-for row in X_train['Description']:
-    row = word_tokenize(row)
-    row = [preFun.remove_NewLine(i) for i in row]
-    row = [i for i in row if i == re.sub(r'//', '', i)]
-    row = [i for i in row if i == re.sub(r'https', '', i)]
-    row = [re.sub(r'[^a-zA-Z0-9\s]+', '', preFun.remove_punc(i)) for i in row]
-    row = [preFun.remove_numbers(i) for i in row]
-    row = [word for word in row if word not in stop_words]
-    row = [i for i in row if i != '']
-    row = [stemmer.stem(word) for word in row]
-    row = [lemmatizer.lemmatize(word, pos='v') for word in row]
-    DesColList.append(len(set(row)))
-X_train['Description']= DesColList
-X_train = preFun.feature_scaling(X_train, 'Description')
 ##################################Developer##################################
 # Feature Encoding
 # print(X_train['Developer'])
@@ -297,21 +274,6 @@ X_test = testPre.scaler(X_test, 'Price')
 X_test = testPre.scaler(X_test, 'Size')
 X_test = testPre.scaler(X_test, 'User Rating Count')
 
-for row in X_test['Description']:
-    row = word_tokenize(row)
-    row = [preFun.remove_NewLine(i) for i in row]
-    row = [i for i in row if i == re.sub(r'//', '', i)]
-    row = [i for i in row if i == re.sub(r'https', '', i)]
-    row = [re.sub(r'[^a-zA-Z0-9\s]+', '', preFun.remove_punc(i)) for i in row]
-    row = [preFun.remove_numbers(i) for i in row]
-    row = [word for word in row if word not in stop_words]
-    row = [i for i in row if i != '']
-    row = [stemmer.stem(word) for word in row]
-    row = [lemmatizer.lemmatize(word, pos='v') for word in row]
-    DesColtest.append(len(set(row)))
-
-X_test['Description']= DesColtest
-X_test = testPre.scaler(X_test,'Description')
 # # # Test
 # # Y_test = testPre.scaler(Y_test, 'Average User Rating')
 # reshaped_test_col = np.array(Y_test).reshape(-1, 1)
@@ -349,6 +311,7 @@ X_test = X_test[top_features]
 X_test = X_test.reindex(columns=X_train.columns)
 
 """Linear Reg"""
+
 for col in X_train:
     model = LinearRegression()
     X = np.expand_dims(X_train[col], axis=1)
@@ -357,29 +320,19 @@ for col in X_train:
     model.fit(X, Y)
     y_pred = model.predict(X_test_col)
 
-    print('-Linear Regression Using ',col)
+    print('-Linear Regression Using ', col)
     print('Mean Square Error', metrics.mean_squared_error(Y_test, y_pred))
     print('Accuracy', "%.4f" % (metrics.r2_score(Y_test, y_pred)), '\n')
 
     plt.figure(figsize=(4, 3))
     ax = plt.axes()
     ax.scatter(X, Y)
-    ax.plot(X_test_col, y_pred,color='red')
+    ax.plot(X_test_col, y_pred, color='red')
     plt.title('Linear Regression')
     ax.set_xlabel(col)
     ax.set_ylabel('Average User Rating')
     ax.axis('tight')
-    plt.show()
-
-"""Multiple Reg"""
-
-regr = linear_model.LinearRegression()
-regr.fit(X_train, Y_train)
-predicted = regr.predict(X_test)
-y_pred = regr.predict(X_test)
-print('-Multiple Regression:')
-print('Mean Square Error', metrics.mean_squared_error(np.asarray(Y_test), y_pred))
-print('Accuracy', "%.4f" % (metrics.r2_score(Y_test, y_pred)), '\n')
+    # plt.show()
 
 """Polynomial Reg"""
 
@@ -403,11 +356,10 @@ prediction = poly_model.predict(poly_features.fit_transform(X_test))
 print('-Polynomail Regression:')
 print('Mean Square Error', metrics.mean_squared_error(Y_test, prediction))
 print('Accuracy', "%.4f" % (metrics.r2_score(Y_test, prediction)), '\n')
-
 for col in X_train:
     # Fitting Polynomial Regression to the dataset
-    X=np.array(X_train[col]).reshape(-1, 1)
-    Y=np.array(Y_train).reshape(-1, 1)
+    X = np.array(X_train[col]).reshape(-1, 1)
+    Y = np.array(Y_train).reshape(-1, 1)
     poly = PolynomialFeatures(degree=2)
     X_poly = poly.fit_transform(X)
     poly.fit(X_poly, Y)
@@ -421,8 +373,7 @@ for col in X_train:
     plt.xlabel(col)
     plt.ylabel('Average User Rating')
 
-    plt.show()
-
+    # plt.show()
 """Gradient Boosting Reg"""
 est = GradientBoostingRegressor(n_estimators=46, max_depth=3)
 
