@@ -22,6 +22,8 @@ from nltk.stem import WordNetLemmatizer
 
 filledColumns = {}
 nltk.download('wordnet')
+nltk.download('stopwords')
+nltk.download('punkt')
 DesColList = []
 DesColtest = []
 stemmer = PorterStemmer()
