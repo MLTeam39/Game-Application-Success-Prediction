@@ -77,6 +77,14 @@ X_train = preFun.feature_scaling(X_train, 'Price')
 # print(X_train['Price'])
 
 ##################################In-app Purchases##################################
+splittedRow = []
+newCol = []
+for row in X_train['In-app Purchases']:
+    splittedRow = [float(value) for value in row.split(', ')]
+    newCol.append(statistics.mean(splittedRow))
+
+X_train['In-app Purchases'] = newCol
+# print(X_train['In-app Purchases'])
 # Fill nulls
 # print(X_train['In-app Purchases'])
 X_train['In-app Purchases'].fillna(X_train['In-app Purchases'].mode()[0], inplace=True)
