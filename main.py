@@ -2,18 +2,32 @@
 import numpy as np
 import pandas as pd
 import statistics
+import re
 import matplotlib.pyplot as plt
 import preprocessingFunctions as preFun
 import testPreprocessing as testPre
 from sklearn import linear_model
 from sklearn import metrics
+from collections import Counter
 from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.feature_extraction.text import CountVectorizer
+import nltk
+from nltk.tokenize import word_tokenize
+from nltk.corpus import stopwords
+from nltk.stem.porter import PorterStemmer
+from nltk.stem import WordNetLemmatizer
 
 filledColumns = {}
+nltk.download('wordnet')
+DesColList = []
+DesColtest = []
+stemmer = PorterStemmer()
+stop_words = set(stopwords.words("english"))
+lemmatizer = WordNetLemmatizer()
 
 ##################################Loading Data##################################
 data = pd.read_csv('games-regression-dataset.csv')
@@ -68,6 +82,22 @@ X_train = preFun.feature_scaling(X_train, 'Price')
 X_train['In-app Purchases'].fillna(X_train['In-app Purchases'].mode()[0], inplace=True)
 filledColumns['In-app Purchases'] = X_train['In-app Purchases'].mode()[0]
 # print(X_train['In-app Purchases'])
+
+##################################Description##################################
+for row in X_train['Description']:
+    row = word_tokenize(row)
+    row = [preFun.remove_NewLine(i) for i in row]
+    row = [i for i in row if i == re.sub(r'//', '', i)]
+    row = [i for i in row if i == re.sub(r'https', '', i)]
+    row = [re.sub(r'[^a-zA-Z0-9\s]+', '', preFun.remove_punc(i)) for i in row]
+    row = [preFun.remove_numbers(i) for i in row]
+    row = [word for word in row if word not in stop_words]
+    row = [i for i in row if i != '']
+    row = [stemmer.stem(word) for word in row]
+    row = [lemmatizer.lemmatize(word, pos='v') for word in row]
+    DesColList.append(len(set(row)))
+X_train['Description']= DesColList
+X_train = preFun.feature_scaling(X_train, 'Description')
 
 splittedRow = []
 newCol = []
@@ -274,6 +304,22 @@ X_test = testPre.scaler(X_test, 'Price')
 X_test = testPre.scaler(X_test, 'Size')
 X_test = testPre.scaler(X_test, 'User Rating Count')
 
+for row in X_test['Description']:
+    row = word_tokenize(row)
+    row = [preFun.remove_NewLine(i) for i in row]
+    row = [i for i in row if i == re.sub(r'//', '', i)]
+    row = [i for i in row if i == re.sub(r'https', '', i)]
+    row = [re.sub(r'[^a-zA-Z0-9\s]+', '', preFun.remove_punc(i)) for i in row]
+    row = [preFun.remove_numbers(i) for i in row]
+    row = [word for word in row if word not in stop_words]
+    row = [i for i in row if i != '']
+    row = [stemmer.stem(word) for word in row]
+    row = [lemmatizer.lemmatize(word, pos='v') for word in row]
+    DesColtest.append(len(set(row)))
+    
+X_test['Description']= DesColtest
+X_test = testPre.scaler(X_test,'Description')
+
 # # # Test
 # # Y_test = testPre.scaler(Y_test, 'Average User Rating')
 # reshaped_test_col = np.array(Y_test).reshape(-1, 1)
@@ -333,6 +379,16 @@ for col in X_train:
     ax.set_ylabel('Average User Rating')
     ax.axis('tight')
     # plt.show()
+    
+"""Multiple Reg"""
+
+regr = linear_model.LinearRegression()
+regr.fit(X_train, Y_train)
+predicted = regr.predict(X_test)
+y_pred = regr.predict(X_test)
+print('-Multiple Regression:')
+print('Mean Square Error', metrics.mean_squared_error(np.asarray(Y_test), y_pred))
+print('Accuracy', "%.4f" % (metrics.r2_score(Y_test, y_pred)), '\n')
 
 """Polynomial Reg"""
 
