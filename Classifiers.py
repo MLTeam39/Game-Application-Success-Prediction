@@ -19,6 +19,8 @@ print(X_Train)
 d = {'High': 2, 'Intermediate': 1, 'Low': 0}
 Y_Train = Y_Train.map(d)
 dtree = DecisionTreeClassifier(max_leaf_nodes=4)
+print(X_Train)
+print(Y_Train)
 dtree = dtree.fit(X_Train, Y_Train)
 Y_Test = Y_Test.map(d)
 res_pred = dtree.predict(X_Test)
