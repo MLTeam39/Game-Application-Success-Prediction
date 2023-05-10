@@ -29,12 +29,13 @@ stop_words = set(stopwords.words("english"))
 lemmatizer = WordNetLemmatizer()
 ##################################Loading Data##################################
 data = pd.read_csv('games-regression-dataset.csv')
-X = data.iloc[:, :-1]
-Y = data.iloc[:, -1]
+data2 = pd.read_csv('games-classification-dataset.csv')
+X = data.drop(["Average User Rating"], axis=1)  # features
+X['Rate'] = data2['Rate']
+Y = data["Average User Rating"]  # label
 
 ##################################Split Data##################################
 X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=0)
-
 trainData = X_train
 trainData['Average User Rating'] = Y_train
 testData = X_test
@@ -42,9 +43,10 @@ testData['Average User Rating'] = Y_test
 
 trainData.to_csv('TrainData.csv', index=False)
 testData.to_csv('TestData.csv', index=False)
-
 trainData = pd.read_csv('TrainData.csv')
 testData = pd.read_csv('TestData.csv')
+trainData = trainData.drop('Rate', axis=1)
+testData = testData.drop('Rate', axis=1)
 X_train = trainData.iloc[:, :-1]
 Y_train = trainData.iloc[:, -1]
 X_test = testData.iloc[:, :-1]
