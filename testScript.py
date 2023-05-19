@@ -1,62 +1,114 @@
-# import re
-# import nltk
+import joblib
+import numpy as np
 import pandas as pd
 import testPreprocessing as testPre
-# import preprocessingFunctions as preFun
-from main import genres, genresFreq
-# from nltk.tokenize import word_tokenize
-
+import preprocessingFunctions as preFun
+from nltk.tokenize import word_tokenize
 
 """Take user's to-be-tested data"""
 
 print("Welcome to our Game Application Success Prediction Model")
-print("Where We are using your game's information to predict it's Average User Rating")
+print("Where We are using your game's information to predict it's Rate")
 print("Please enter your game's:")
 
 columns = ['URL', 'ID', 'Name', 'Subtitle', 'Icon URL', 'User Rating Count', 'Price', 'In-app Purchases', 'Description', 'Developer', 'Age Rating', 'Languages', 'Size', 'Primary Genre', 'Genres', 'Original Release Date', 'Current Version Release Date']
-testData = pd.DataFrame();
 
-# for col in columns:
-#     colVal = input('{}: '.format(col))
-#     testData[col] = colVal;
-#
-# print('Please Wait........')
+tst = []
+for col in columns:
+    colVal = input('{}: '.format(col))
+    if colVal == '':
+        colVal = None
+    tst.append(colVal)
+
+print(tst)
+testData = pd.DataFrame(columns=columns)
+testData.loc[len(testData.index)] = tst
+
+print('Your Game\'s Data is:\n', testData)
+print('Please Wait.....')
 
 """Preprocessing Test Data"""
 
-# testData = testPre.drop_test(testData)
-# # print(testData.columns)
-#
-# # print(testData['Languages'].isnull().sum())
-# testData = testPre.fill_nulls(testData)
-# # print(testData['Languages'].isnull().sum())
+# Drop columns
+print(testData.columns)
+testData = testPre.drop_test(testData)
+print(testData.columns)
 
-# testData = testPre.inApp_test(testData)
-# testData = testPre.developer_test(testData)
-# testData = testPre.avgRating_test(testData)
-# testData = testPre.languages_test(testData)
-# testData = testPre.primary_test(testData)
-# testData = testPre.genres_test(testData, genresFreq, genres)
-# testData = testPre.dates_test(testData)
+# Fill Nulls
+# print(testData['Languages'].isnull().sum())
+testData = testPre.fill_nulls(testData)
+# print(testData['Languages'].isnull().sum())
 
+# Apply training preprocessing on test data
+testData = testPre.in_app_test(testData)
+testData = testPre.description_text(testData)
+testData = testPre.developer_test(testData)
+testData = testPre.avg_rating_test(testData)
+testData = testPre.languages_test(testData)
+testData = testPre.primary_test(testData)
+testData = testPre.genres_test(testData)
+testData = testPre.dates_test(testData)
 
-# testData = testPre.scaler(testData, 'Developer')
-# testData = testPre.scaler(testData, 'Price')
-# testData = testPre.scaler(testData, 'Size')
-# testData = testPre.scaler(testData, 'User Rating Count')
-#
-# for row in testData['Description']:
-#     row = word_tokenize(row)
-#     row = [preFun.remove_NewLine(i) for i in row]
-#     row = [i for i in row if i == re.sub(r'//', '', i)]
-#     row = [i for i in row if i == re.sub(r'https', '', i)]
-#     row = [re.sub(r'[^a-zA-Z0-9\s]+', '', preFun.remove_punc(i)) for i in row]
-#     row = [preFun.remove_numbers(i) for i in row]
-#     row = [word for word in row if word not in stop_words]
-#     row = [i for i in row if i != '']
-#     row = [stemmer.stem(word) for word in row]
-#     row = [lemmatizer.lemmatize(word, pos='v') for word in row]
-#     DesColtest.append(len(set(row)))
-#
-# testData['Description']= DesColtest
-# testData = testPre.scaler(testData,'Description')
+# Apply training scaler preprocessing on test data
+testData = testPre.scaler_fun(testData, 'Description')
+testData = testPre.scaler_fun(testData, 'Developer')
+testData = testPre.scaler_fun(testData, 'Price')
+testData = testPre.scaler_fun(testData, 'Size')
+testData = testPre.scaler_fun(testData, 'User Rating Count')
+
+"""Load Regression Models"""
+linear_reg_model = joblib.load(open('Linear_Reg_Model', 'rb'))
+multiple_reg_model = joblib.load(open('Multiple_Reg_Model', 'rb'))
+polynomial_reg_model = joblib.load(open('Polynomial_Reg_Model', 'rb'))
+gradient_reg_model = joblib.load(open('Gradient_Reg_Model', 'rb'))
+
+"""Load Classification Models"""
+decision_clf_model = joblib.load(open('Decision_Clf_Model', 'rb'))
+knn_clf_model = joblib.load(open('KNN_Clf_Model', 'rb'))
+svm_clf_model = joblib.load(open('SVM_Clf_Model', 'rb'))
+
+"""Predict Test Data Result"""
+print('Choose your Preferred Learning:\n1 -> Regression\n2 -> Classification')
+learning_choice = input('Please Enter Your Choice (1 or 2):')
+if learning_choice == '1':
+    # TODO: Loading...
+    with open('Reg_Features.txt', 'r') as file:
+        features = [line.strip() for line in file.readlines()]
+    file.close()
+
+    with open('Indexing.txt', 'r') as file:
+        indexing = [line.strip() for line in file.readlines()]
+    file.close()
+
+    testData = testData.reindex(columns=indexing)
+
+    """Linear Regression"""
+    linear_test_col = np.expand_dims(testData['Current Version Release Year'], axis=1)
+    y_pred1 = linear_reg_model.predict(linear_test_col)
+
+    testData = testData[features]
+    print('TEST DATA', testData, type(testData), testData.shape)
+    y_pred2 = multiple_reg_model.predict(testData)
+    y_pred3 = polynomial_reg_model.predict(testData)
+    y_pred4 = gradient_reg_model.predict(testData)
+    print('Your Game\'s Average User Rating using:')
+    print('Linear Regression is:', y_pred1)
+    print('Multiple Regression is:', y_pred2)
+    print('Polynomial Regression is:', y_pred3)
+    print('Gradient Regression is:', y_pred4)
+    # print('Choose your Regression Model:\n1 -> Linear Regression\n2 -> Multiple Regression')
+    # print('3 -> Polynomial Regression\n4 -> Gradient Regression')
+    # reg_choice = input('Please Enter Your Choice (1, 2, 3 or 4):')
+elif learning_choice == '2':
+    y_pred1 = decision_clf_model.predict(testData)
+    y_pred2 = knn_clf_model.predict(testData)
+    y_pred3 = svm_clf_model.predict(testData)
+    print('Your Game\'s Rate using:')
+    print('Decision Tree Classifier is:', y_pred1)
+    print('KNN Classifier is:', y_pred2)
+    print('SVM Classifier is:', y_pred3)
+    # print('Choose your Classification Model:\n1 -> Decision Tree\n2 -> KNN\n3 -> SVM')
+    # clas_choice = input('Please Enter Your Choice (1, 2 or 3):')
+else:
+    print('Invalid Choice, Try Again!')
+

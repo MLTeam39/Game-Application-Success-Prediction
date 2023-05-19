@@ -1,11 +1,11 @@
-import joblib
 import re
+import joblib
 import numpy as np
 import testPreprocessing as testPre
 from sklearn.preprocessing import MaxAbsScaler
 
-# TODO: Test
 droppedCols = []
+
 
 def count_nulls(col, col_name):
     null_percentage = col.isna().sum() / len(col) * 100
@@ -39,6 +39,11 @@ def feature_selection(x):
 
     print('Dropped Columns : ', droppedCols, '\n')
     testPre.droppedCols = droppedCols
+    # TODO: Save dropped columns to use later for testing
+    dropped_file = open('Dropped.txt', 'w')
+    for col in droppedCols:
+        dropped_file.write('%s\n' % col)
+    dropped_file.close()
     return x
 
 
@@ -62,9 +67,11 @@ def feature_scaling(x_train, col_name):
 
     return x_train
 
+
 def remove_numbers(text):
     result = re.sub(r'\d+', '', text)
     return result
+
 
 def remove_punc(string):
     punc = '''!()-[]{};:'"\, <>./?@#$%^&*_~'''
@@ -73,12 +80,11 @@ def remove_punc(string):
             string = string.replace(ele, '')
     return string
 
-def remove_NewLine(text):
-    text =  text.replace('\\n', '')
+
+def remove_new_line(text):
+    text = text.replace('\\n', '')
     text = text.replace('\n', '')
     text = text.replace('\\u', '')
     text = text.replace('\\t', '')
     text = text.replace('\\x', '')
-    return  text
-
-
+    return text

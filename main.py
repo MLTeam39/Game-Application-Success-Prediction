@@ -1,34 +1,36 @@
+import re
+
+import joblib
+import nltk
+import pickle
+import statistics
 import numpy as np
 import pandas as pd
-import statistics
-import re
 import matplotlib.pyplot as plt
-import preprocessingFunctions as preFun
 import testPreprocessing as testPre
-from sklearn import linear_model
+import preprocessingFunctions as preFun
 from sklearn import metrics
-from collections import Counter
+from sklearn import linear_model
+from nltk.corpus import stopwords
 from sklearn.preprocessing import LabelEncoder
+from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import GradientBoostingRegressor
-from sklearn.feature_extraction.text import CountVectorizer
-import nltk
 from nltk.tokenize import word_tokenize
-from nltk.corpus import stopwords
-from nltk.stem.porter import PorterStemmer
 from nltk.stem import WordNetLemmatizer
+from nltk.stem.porter import PorterStemmer
 
 filledColumns = {}
 nltk.download('wordnet')
 nltk.download('stopwords')
 nltk.download('punkt')
-DesColList = []
-DesColtest = []
+Des_col_list = []
+Des_col_test = []
 stemmer = PorterStemmer()
 stop_words = set(stopwords.words("english"))
 lemmatizer = WordNetLemmatizer()
+
 ##################################Loading Data##################################
 data = pd.read_csv('games-regression-dataset.csv')
 data2 = pd.read_csv('games-classification-dataset.csv')
@@ -93,7 +95,7 @@ X_train['In-app Purchases'] = newCol
 ##################################Description##################################
 for row in X_train['Description']:
     row = word_tokenize(row)
-    row = [preFun.remove_NewLine(i) for i in row]
+    row = [preFun.remove_new_line(i) for i in row]
     row = [i for i in row if i == re.sub(r'//', '', i)]
     row = [i for i in row if i == re.sub(r'https', '', i)]
     row = [re.sub(r'[^a-zA-Z0-9\s]+', '', preFun.remove_punc(i)) for i in row]
@@ -102,9 +104,10 @@ for row in X_train['Description']:
     row = [i for i in row if i != '']
     row = [stemmer.stem(word) for word in row]
     row = [lemmatizer.lemmatize(word, pos='v') for word in row]
-    DesColList.append(len(set(row)))
-X_train['Description']= DesColList
+    Des_col_list.append(len(set(row)))
+X_train['Description'] = Des_col_list
 X_train = preFun.feature_scaling(X_train, 'Description')
+
 ##################################Developer##################################
 # Feature Encoding
 # print(X_train['Developer'])
@@ -153,8 +156,7 @@ Genres = pd.read_csv("games-regression-dataset.csv", usecols=['Genres'])
 count = 0
 
 for i in range(len(PrimaryGenre.index)):
-    if (
-            PrimaryGenre.iloc[i].to_string().split(' ')[5].__eq__(
+    if (PrimaryGenre.iloc[i].to_string().split(' ')[5].__eq__(
                 (Genres.iloc[i].to_string()).split(', ')[0].split(' ')[4])):
         count = count + 1
 
@@ -168,7 +170,8 @@ if float(flag) >= 99:
 # for i in output_train.columns.values.tolist():
 #     X_train[i] = output_train[i]
 
-### Combine all genres in one column
+
+# Combine all genres in one column
 genres = []
 genresRows = [[]]
 for row in X_train['Genres']:
@@ -279,7 +282,17 @@ X_train = X_train.drop(['Current Version Release Date'], axis=1)
 
 ##################################Test##################################
 
-testPre.filledColumns = filledColumns
+# TODO: Save filled columns values to use later for testing
+with open('Filled.pkl', 'wb') as f:
+    pickle.dump(filledColumns, f)
+
+# TODO: Save all genres and their frequency data to use later for testing
+genres.to_csv('Genres.csv', index=False)
+
+with open('Genres_Frequency.pkl', 'wb') as f:
+    pickle.dump(genresFreq, f)
+
+
 # print(X_test.columns)
 X_test = testPre.drop_test(X_test)
 # print(X_test.columns)
@@ -288,36 +301,23 @@ X_test = testPre.drop_test(X_test)
 X_test = testPre.fill_nulls(X_test)
 # print(X_test['Languages'].isnull().sum())
 
-X_test = testPre.inApp_test(X_test)
+X_test = testPre.in_app_test(X_test)
+X_test = testPre.description_text(X_test)
 X_test = testPre.developer_test(X_test)
-X_test = testPre.avgRating_test(X_test)
+X_test = testPre.avg_rating_test(X_test)
 X_test = testPre.languages_test(X_test)
 X_test = testPre.primary_test(X_test)
-X_test = testPre.genres_test(X_test, genresFreq, genres)
+X_test = testPre.genres_test(X_test)
 X_test = testPre.dates_test(X_test)
 
-X_test = testPre.scaler(X_test, 'Developer')
-X_test = testPre.scaler(X_test, 'Price')
-X_test = testPre.scaler(X_test, 'Size')
-X_test = testPre.scaler(X_test, 'User Rating Count')
+X_test = testPre.scaler_fun(X_test, 'Description')
+X_test = testPre.scaler_fun(X_test, 'Developer')
+X_test = testPre.scaler_fun(X_test, 'Price')
+X_test = testPre.scaler_fun(X_test, 'Size')
+X_test = testPre.scaler_fun(X_test, 'User Rating Count')
 
-for row in X_test['Description']:
-    row = word_tokenize(row)
-    row = [preFun.remove_NewLine(i) for i in row]
-    row = [i for i in row if i == re.sub(r'//', '', i)]
-    row = [i for i in row if i == re.sub(r'https', '', i)]
-    row = [re.sub(r'[^a-zA-Z0-9\s]+', '', preFun.remove_punc(i)) for i in row]
-    row = [preFun.remove_numbers(i) for i in row]
-    row = [word for word in row if word not in stop_words]
-    row = [i for i in row if i != '']
-    row = [stemmer.stem(word) for word in row]
-    row = [lemmatizer.lemmatize(word, pos='v') for word in row]
-    DesColtest.append(len(set(row)))
-
-X_test['Description']= DesColtest
-X_test = testPre.scaler(X_test,'Description')
 # # # Test
-# # Y_test = testPre.scaler(Y_test, 'Average User Rating')
+# # Y_test = testPre.scaler_fun(Y_test, 'Average User Rating')
 # reshaped_test_col = np.array(Y_test).reshape(-1, 1)
 # scaler_path = 'Average User Rating' + ' Scaler.gz'
 # scaler = joblib.load(scaler_path)
@@ -339,8 +339,14 @@ corr_data['Average User Rating'] = Y_train
 corr = corr_data.corr()
 
 top_features = corr.index[abs(corr['Average User Rating']) >= 0.02]
-
 top_features = top_features.delete(-1)
+
+# TODO: Save top features to use later for testing
+features_file = open('Reg_Features.txt', 'w')
+for col in top_features:
+    features_file.write('%s\n' % col)
+features_file.close()
+
 print('\nTop Features :\n', top_features.values, '\n')
 
 X_train = X_train[top_features]
@@ -350,7 +356,15 @@ X_test = X_test[top_features]
 # print(X_train.columns)
 # print(X_test.columns)
 
+# TODO: Save new columns indexing to use later for testing
+indexing_file = open('Indexing.txt', 'w')
+for col in X_train.columns:
+    indexing_file.write('%s\n' % col)
+indexing_file.close()
+
 X_test = X_test.reindex(columns=X_train.columns)
+
+print('Regression Models:')
 
 """Linear Reg"""
 for col in X_train:
@@ -361,14 +375,18 @@ for col in X_train:
     model.fit(X, Y)
     y_pred = model.predict(X_test_col)
 
-    print('-Linear Regression Using ',col)
+    if col == 'Current Version Release Year':
+        # TODO : Save model to use later for testing
+        joblib.dump(model, 'Linear_Reg_Model')
+
+    print('-Linear Regression Using ', col)
     print('Mean Square Error', metrics.mean_squared_error(Y_test, y_pred))
     print('Accuracy', "%.4f" % (metrics.r2_score(Y_test, y_pred)), '\n')
 
     plt.figure(figsize=(4, 3))
     ax = plt.axes()
     ax.scatter(X, Y)
-    ax.plot(X_test_col, y_pred,color='red')
+    ax.plot(X_test_col, y_pred, color='red')
     plt.title('Linear Regression')
     ax.set_xlabel(col)
     ax.set_ylabel('Average User Rating')
@@ -380,10 +398,14 @@ for col in X_train:
 regr = linear_model.LinearRegression()
 regr.fit(X_train, Y_train)
 predicted = regr.predict(X_test)
+print('TEST DATA', X_test, type(X_test), X_test.shape)
 y_pred = regr.predict(X_test)
 print('-Multiple Regression:')
 print('Mean Square Error', metrics.mean_squared_error(np.asarray(Y_test), y_pred))
 print('Accuracy', "%.4f" % (metrics.r2_score(Y_test, y_pred)), '\n')
+
+# TODO : Save model to use later for testing
+joblib.dump(model, 'Multiple_Reg_Model')
 
 """Polynomial Reg"""
 
@@ -402,6 +424,9 @@ y_pred = poly_model.predict(poly_features.transform(X_test))
 # predicting on test data-set
 prediction = poly_model.predict(poly_features.fit_transform(X_test))
 
+# TODO : Save model to use later for testing
+joblib.dump(model, 'Polynomial_Reg_Model')
+
 # print('Co-efficient of linear regression', poly_model.coef_)
 # print('Intercept of linear regression model', poly_model.intercept_)
 print('-Polynomail Regression:')
@@ -410,8 +435,8 @@ print('Accuracy', "%.4f" % (metrics.r2_score(Y_test, prediction)), '\n')
 
 for col in X_train:
     # Fitting Polynomial Regression to the dataset
-    X=np.array(X_train[col]).reshape(-1, 1)
-    Y=np.array(Y_train).reshape(-1, 1)
+    X = np.array(X_train[col]).reshape(-1, 1)
+    Y = np.array(Y_train).reshape(-1, 1)
     poly = PolynomialFeatures(degree=2)
     X_poly = poly.fit_transform(X)
     poly.fit(X_poly, Y)
@@ -437,3 +462,6 @@ pred = est.predict(X_test)
 print('-Gradient Boosting Regressor:')
 print('Mean Square Error', metrics.mean_squared_error(Y_test, pred))
 print('Accuracy', "%.4f" % (metrics.r2_score(Y_test, pred)), '\n')
+
+# TODO : Save model to use later for testing
+joblib.dump(model, 'Gradient_Reg_Model')

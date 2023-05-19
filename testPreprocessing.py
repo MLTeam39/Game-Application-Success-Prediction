@@ -1,27 +1,37 @@
+import re
 import joblib
+import pickle
 import statistics
 import numpy as np
 import pandas as pd
+import preprocessingFunctions as preFun
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+from nltk.stem import WordNetLemmatizer
+from nltk.stem.porter import PorterStemmer
 from sklearn.preprocessing import LabelEncoder
-
-droppedCols = []
-filledColumns = {}
 
 
 def drop_test(x):
-    # print(droppedCols)
-    x = x.drop(droppedCols, axis=1)
+    # TODO: Load training dropped columns
+    with open('Dropped.txt', 'r') as file:
+        dropped = [line.strip() for line in file.readlines()]
+    file.close()
+    x = x.drop(dropped, axis=1)
     return x
 
 
 def fill_nulls(x):
-    # print(filledColumns)
-    for colName in filledColumns.keys():
-        x[colName].fillna(filledColumns[colName], inplace=True)
+    # TODO: Load training filled columns values
+    with open('Filled.pkl', 'rb') as f:
+        filled = pickle.load(f)
+    print(filled)
+    for colName in filled.keys():
+        x[colName].fillna(filled[colName], inplace=True)
     return x
 
 
-def scaler(x, col_name):
+def scaler_fun(x, col_name):
     reshaped_test_col = np.array(x[col_name]).reshape(-1, 1)
     scaler_path = col_name + ' Scaler.gz'
     scaler = joblib.load(scaler_path)
@@ -29,14 +39,36 @@ def scaler(x, col_name):
     return x
 
 
-def inApp_test(x):
-    testRow = []
-    testCol = []
+def in_app_test(x):
+    test_row = []
+    test_col = []
     for test in x['In-app Purchases']:
-        testRow = [float(v) for v in test.split(', ')]
-        testCol.append(statistics.mean(testRow))
+        test_row = [float(v) for v in test.split(', ')]
+        test_col.append(statistics.mean(test_row))
 
-    x['In-app Purchases'] = testCol
+    x['In-app Purchases'] = test_col
+    return x
+
+
+def description_text(x):
+    des_col_list = []
+    stemmer = PorterStemmer()
+    stop_words = set(stopwords.words("english"))
+    lemmatizer = WordNetLemmatizer()
+    for row in x['Description']:
+        row = word_tokenize(row)
+        row = [preFun.remove_new_line(i) for i in row]
+        row = [i for i in row if i == re.sub(r'//', '', i)]
+        row = [i for i in row if i == re.sub(r'https', '', i)]
+        row = [re.sub(r'[^a-zA-Z0-9\s]+', '', preFun.remove_punc(i)) for i in row]
+        row = [preFun.remove_numbers(i) for i in row]
+        row = [word for word in row if word not in stop_words]
+        row = [i for i in row if i != '']
+        row = [stemmer.stem(word) for word in row]
+        row = [lemmatizer.lemmatize(word, pos='v') for word in row]
+        des_col_list.append(len(set(row)))
+
+    x['Description'] = des_col_list
     return x
 
 
@@ -49,7 +81,7 @@ def developer_test(x):
     return x
 
 
-def avgRating_test(x):
+def avg_rating_test(x):
     age_avg = (4.0 + 3.0 + 2.0 + 1.0) / 4
     not_in_rate = ['4+', '9+', '12+', '17+']
     col = x['Age Rating']
@@ -82,19 +114,25 @@ def primary_test(x):
     return x
 
 
-def genres_test(x, genresFreq, genres):
-    genresFreq.loc['unknown'] = 0.0  # adding a row
+def genres_test(x):
+    # TODO: Load all genres and their frequency data
+    genres = pd.read_csv('Genres.csv')
+
+    with open('Genres_Frequency.pkl', 'rb') as f:
+        genres_freq = pickle.load(f)
+
+    genres_freq.loc['unknown'] = 0.0  # adding a row
     # print('genres Frequency : \n', genresFreq)
 
-    testRows = []
+    test_rows = []
     # print('genres', genres)
     for row in x['Genres']:
-        genreRow = [checkExistence(gen, genres) for gen in row.split(', ')]
+        genre_row = [check_existence(gen, genres) for gen in row.split(', ')]
         # print(genreRow)
-        testRows.append(genresFreq[genreRow].sum())
+        test_rows.append(genres_freq[genre_row].sum())
 
-    # print(x['Genrfes'])
-    x['Genres'] = testRows
+    # print(x['Genres'])
+    x['Genres'] = test_rows
     # print(x['Genres'])
     return x
 
@@ -119,7 +157,7 @@ def dates_test(x):
     return x
 
 
-def checkExistence(gen, genres):
+def check_existence(gen, genres):
     if gen in genres.values:
         return gen
     else:
