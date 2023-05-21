@@ -1,9 +1,12 @@
+-Input:
 https://apps.apple.com/us/app/worp-next-gen-solitaire-puzzle/id318083567
 318083567
 WORP - Next Gen Solitaire Puzzle
+
 https://is2-ssl.mzstatic.com/image/thumb/Purple71/v4/d8/f2/53/d8f253f3-ae6e-211f-3e5c-b0f9a7b33a7b/source/512x512bb.jpg
 9
 1.99
+
 "Want to stimulate your brain, have fun and relax, all at the same time? Welcome to the world of WORP. Your iPhone now becomes a gaming machine, full of challenge and excitement. Manipulate the colored bits correctly and you take the win. Click \u201c\u2026More\u201d to learn why you should download this App today!\n\n\nTop #8 Game for 
 Maximilian Auer
 4+
@@ -13,3 +16,7 @@ Games
 Games, Board, Entertainment, Strategy
 7/6/2009
 24/10/2016
+
+-Output:
+Reg -> 3
+Clf -> Intermediate

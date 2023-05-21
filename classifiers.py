@@ -47,6 +47,12 @@ plt.show()
 droppedCols = X_Train.columns[droppedIndices]
 # print(droppedCols)
 
+# TODO: Save Classification top features to use later for testing
+features_file = open('Clf_Dropped_Features.txt', 'w')
+for col in droppedCols:
+    features_file.write('%s\n' % col)
+features_file.close()
+
 X_Train = X_Train.drop(droppedCols, axis=1)
 X_Test = X_Test.drop(droppedCols, axis=1)
 

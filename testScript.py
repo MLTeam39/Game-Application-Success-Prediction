@@ -30,9 +30,9 @@ print('Please Wait.....')
 """Preprocessing Test Data"""
 
 # Drop columns
-print(testData.columns)
+# print(testData.columns)
 testData = testPre.drop_test(testData)
-print(testData.columns)
+# print(testData.columns)
 
 # Fill Nulls
 # print(testData['Languages'].isnull().sum())
@@ -69,41 +69,57 @@ svm_clf_model = joblib.load(open('SVM_Clf_Model', 'rb'))
 
 """Predict Test Data Result"""
 print('Choose your Preferred Learning:\n1 -> Regression\n2 -> Classification')
-learning_choice = input('Please Enter Your Choice (1 or 2):')
+learning_choice = input('Please Enter Your Choice (1 or 2): ')
 if learning_choice == '1':
     # TODO: Loading...
     with open('Reg_Features.txt', 'r') as file:
-        features = [line.strip() for line in file.readlines()]
+        reg_features = [line.strip() for line in file.readlines()]
     file.close()
 
     with open('Indexing.txt', 'r') as file:
         indexing = [line.strip() for line in file.readlines()]
     file.close()
 
-    testData = testData.reindex(columns=indexing)
-
     """Linear Regression"""
-    linear_test_col = np.expand_dims(testData['Current Version Release Year'], axis=1)
+    linear_test_col = testData['Current Version Release Year']
+    linear_test_col = np.array(linear_test_col).reshape(1, -1)
     y_pred1 = linear_reg_model.predict(linear_test_col)
 
-    testData = testData[features]
-    print('TEST DATA', testData, type(testData), testData.shape)
+    testData = testData[reg_features]
+    testData = testData.reindex(columns=indexing)
+    testData = np.array(testData).reshape(-1, 1)
+    # print('TEST DATA', testData, type(testData), testData.shape)
+
     y_pred2 = multiple_reg_model.predict(testData)
+    y_pred2 = np.array([y for y in y_pred2 if y >= 0]).reshape(1, -1)
     y_pred3 = polynomial_reg_model.predict(testData)
+    y_pred3 = np.array([y for y in y_pred3 if y >= 0]).reshape(1, -1)
     y_pred4 = gradient_reg_model.predict(testData)
-    print('Your Game\'s Average User Rating using:')
-    print('Linear Regression is:', y_pred1)
-    print('Multiple Regression is:', y_pred2)
-    print('Polynomial Regression is:', y_pred3)
-    print('Gradient Regression is:', y_pred4)
+    y_pred4 = np.array([y for y in y_pred4 if y >= 0]).reshape(1, -1)
+
+    print('\nYour Game\'s Average User Rating using:')
+    print('Linear Regression is:', y_pred1[0])
+    print('Multiple Regression is:', y_pred2[0].tolist())
+    print('Polynomial Regression is:', y_pred3[0].tolist())
+    print('Gradient Regression is:', y_pred4[0].tolist())
     # print('Choose your Regression Model:\n1 -> Linear Regression\n2 -> Multiple Regression')
     # print('3 -> Polynomial Regression\n4 -> Gradient Regression')
     # reg_choice = input('Please Enter Your Choice (1, 2, 3 or 4):')
+
 elif learning_choice == '2':
+    # TODO: Loading...
+    with open('Clf_Dropped_Features.txt', 'r') as file:
+        clf_dropped_features = [line.strip() for line in file.readlines()]
+    file.close()
+
+    testData = testData.drop(clf_dropped_features, axis=1)
+    d = {2: 'High', 1: 'Intermediate', 0: 'Low'}
+
     y_pred1 = decision_clf_model.predict(testData)
     y_pred2 = knn_clf_model.predict(testData)
     y_pred3 = svm_clf_model.predict(testData)
-    print('Your Game\'s Rate using:')
+
+    print('\nYour Game\'s Rate using:')
     print('Decision Tree Classifier is:', y_pred1)
     print('KNN Classifier is:', y_pred2)
     print('SVM Classifier is:', y_pred3)

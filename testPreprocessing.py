@@ -25,7 +25,7 @@ def fill_nulls(x):
     # TODO: Load training filled columns values
     with open('Filled.pkl', 'rb') as f:
         filled = pickle.load(f)
-    print(filled)
+    # print(filled)
     for colName in filled.keys():
         x[colName].fillna(filled[colName], inplace=True)
     return x

@@ -1,0 +1,6 @@
+Price
+Developer
+Original Release Month
+Original Release Day
+Current Version Release Month
+Current Version Release Day

@@ -341,7 +341,7 @@ corr = corr_data.corr()
 top_features = corr.index[abs(corr['Average User Rating']) >= 0.02]
 top_features = top_features.delete(-1)
 
-# TODO: Save top features to use later for testing
+# TODO: Save Regression top features to use later for testing
 features_file = open('Reg_Features.txt', 'w')
 for col in top_features:
     features_file.write('%s\n' % col)
