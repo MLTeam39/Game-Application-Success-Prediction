@@ -8,7 +8,9 @@ from sklearn.metrics import mean_squared_error
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.feature_selection import SelectKBest, f_classif
-
+from sklearn.ensemble import BaggingClassifier
+from sklearn.ensemble import AdaBoostClassifier
+from sklearn.ensemble import RandomForestClassifier
 ##################################Loading Data##################################
 X_Train = pd.read_csv('PreprocessedTrain.csv')
 Y_Train = pd.read_csv('TrainData.csv')
@@ -97,3 +99,30 @@ print('Accuracy', "%.4f" % accuracy_score, '\n')
 
 # TODO : Save model to use later for testing
 joblib.dump(svm_clf, 'SVM_Clf_Model')
+
+##################################Bagging Idea##################################
+print('Bagging Idea:')
+
+Bagging = BaggingClassifier(base_estimator=dtree, n_estimators=10, random_state=50)
+Bagging.fit(X_Train, Y_Train)
+score_Bagging = Bagging.score(X_Test, Y_Test)
+
+print(f"Accuracy Bagging Idea: {score_Bagging}",'\n')
+
+##################################Boosting Idea##################################
+print('Boosting Idea:')
+
+Boosting = AdaBoostClassifier(base_estimator=dtree, n_estimators=100, learning_rate=0.1, random_state=42)
+Boosting.fit(X_Train, Y_Train)
+score_Boosting = Boosting.score(X_Test, Y_Test)
+
+print(f"Accuracy Boosting Idea: {score_Boosting}",'\n')
+
+##################################Random Forest##################################
+print('Random Forest:')
+
+RandomForest = RandomForestClassifier(n_estimators=100, random_state=42)
+RandomForest.fit(X_Train, Y_Train)
+score_RandomForest = RandomForest.score(X_Test, Y_Test)
+
+print(f"Accuracy Random Forest: {score_RandomForest}",'\n')
