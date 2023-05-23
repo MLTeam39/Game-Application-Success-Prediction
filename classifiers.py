@@ -11,6 +11,7 @@ from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.ensemble import BaggingClassifier
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import mean_squared_error, r2_score
 ##################################Loading Data##################################
 X_Train = pd.read_csv('PreprocessedTrain.csv')
 Y_Train = pd.read_csv('TrainData.csv')
@@ -63,39 +64,44 @@ X_Test = X_Test.drop(droppedCols, axis=1)
 ##################################Classification##################################
 print('Classification Models:')
 
-"""Decision Tree"""
-dtree = DecisionTreeClassifier(max_leaf_nodes=4)
+
+dtree = DecisionTreeClassifier(max_leaf_nodes=20)#
 dtree = dtree.fit(X_Train, Y_Train)
 Y_Test = Y_Test.map(d)
 res_pred = dtree.predict(X_Test)
 score = accuracy_score(Y_Test, res_pred)
+ 
+mse = mean_squared_error(Y_Test, res_pred)
+r2 = r2_score(Y_Test, res_pred)
+ 
 print('-Decision Tree:')
-print('Accuracy', "%.4f" % score, '\n')
-
-# TODO : Save model to use later for testing
-joblib.dump(dtree, 'Decision_Clf_Model')
-
-
+print('Accuracy', "%.4f" % score)
+print('Mean Squared Error:', "%.4f" % mse)
+print('R2 Score:', "%.4f" % r2)
 """KNN"""
 knn_model = KNeighborsRegressor(n_neighbors=2)
 knn_model.fit(X_Train, Y_Train)
 train_preds = knn_model.predict(X_Train)
 mse = mean_squared_error(Y_Train, train_preds)
-root_mse = sqrt(mse)
+r2 = r2_score(Y_Train, train_preds)
+accuracy = accuracy_score(Y_Test, res_pred)
 print('-KNN:')
 print('Mean Square Error', mse)
-print('Root Mean Square Error', root_mse, '\n')
-
-# TODO : Save model to use later for testing
-joblib.dump(knn_model, 'KNN_Clf_Model')
-
-
+print('R2 Score:', "%.4f" % r2)
+print('Accuracy', "%.4f" % accuracy)
 """SVM"""
-svm_clf = svm.SVC(kernel='linear', degree=1)
+svm_clf = svm.SVC(kernel='poly', degree=35)
 svm_clf.fit(X_Train, Y_Train)
-accuracy_score = svm_clf.score(X_Test, Y_Test)
+res_pred = svm_clf.predict(X_Test)
+accuracy_score = svm_clf.score(X_Test, Y_Test) 
+mse = mean_squared_error(Y_Test, res_pred)
+r2 = r2_score(Y_Test, res_pred)
+ 
 print('-SVM:')
+print('Mean Square Error', mse)
+print('R2 Score:', "%.4f" % r2)
 print('Accuracy', "%.4f" % accuracy_score, '\n')
+
 
 # TODO : Save model to use later for testing
 joblib.dump(svm_clf, 'SVM_Clf_Model')
@@ -126,3 +132,6 @@ RandomForest.fit(X_Train, Y_Train)
 score_RandomForest = RandomForest.score(X_Test, Y_Test)
 
 print(f"Accuracy Random Forest: {score_RandomForest}",'\n')
+#myList = [round(x) for x in myList]
+#Y_Train=Y_Train.map({1: 'low', 2: 'medium', 3: 'high'})
+print(Y_Train)

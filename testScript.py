@@ -118,7 +118,9 @@ elif learning_choice == '2':
     y_pred1 = decision_clf_model.predict(testData)
     y_pred2 = knn_clf_model.predict(testData)
     y_pred3 = svm_clf_model.predict(testData)
-
+    y_pred1=y_pred1.map({1: 'low', 2: 'medium', 3: 'high'})
+    y_pred2=y_pred2.map({1: 'low', 2: 'medium', 3: 'high'})
+    y_pred3=y_pred3.map({1: 'low', 2: 'medium', 3: 'high'})
     print('\nYour Game\'s Rate using:')
     print('Decision Tree Classifier is:', y_pred1)
     print('KNN Classifier is:', y_pred2)
